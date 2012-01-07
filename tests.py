@@ -3,6 +3,7 @@ import unittest
 from core.goodproducer import GoodProducer
 from core.goodproducer import NoLabourToPerformAction, IllegalStateToPerformAction, NoInputToBeTransformed
 
+from core.input import Input
 from core.labour import Labour
 
 
@@ -37,3 +38,13 @@ class GoodProducerTest(unittest.TestCase):
 	self.gp.affect(self.labour)
         self.gp.start()
         self.assertRaises(NoInputToBeTransformed, self.gp.produce, 1)
+
+    def test_produce_with_input(self):
+        inputs = Input()
+
+	self.gp.affect(self.labour)
+	self.gp.load(inputs)
+	
+	self.gp.start()
+	self.gp.produce(1)
+        self.assertEquals(self.gp.get_state(), GoodProducer.PRODUCING)

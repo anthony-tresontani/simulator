@@ -7,26 +7,24 @@ class NoInputToBeTransformed(Exception):pass
 
 
 class GoodProducer(object):
-    IDLE, STARTED = 0, 1
+    IDLE, STARTED, PRODUCING = 0, 1, 2
 
     def __init__(self):
 	self.labour = None
+	self.inputs = None
         self.set_state(GoodProducerIDLEState)
 
     def get_state(self):
 	return self.state.get_state()
 
-    def start(self):
-        self.state.start()
-
-    def stop(self):
-	self.state.stop()
-
-    def produce(self, minutes):
-	self.state.produce(minutes)
+    def __getattr__(self, name):
+	return getattr(self.state, name)
 
     def affect(self, labour):
 	self.labour = labour
+
+    def load(self, input):
+	self.inputs  = input
 
     def set_state(self, state_class):
 	self.state = state_class(self)
@@ -66,4 +64,9 @@ class GoodProducerSTARTEDState(GoodProducerState):
 	self.good_producer.set_state(GoodProducerIDLEState)
 
     def produce(self, minutes):
-	raise NoInputToBeTransformed()
+	if not self.good_producer.inputs:
+	    raise NoInputToBeTransformed()
+        self.good_producer.set_state(GoodProducerPRODUCINGState)
+
+class GoodProducerPRODUCINGState(GoodProducerState):
+    STATUS = GoodProducer.PRODUCING
