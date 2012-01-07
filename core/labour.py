@@ -1,0 +1,1 @@
+class Labour(object):pass
