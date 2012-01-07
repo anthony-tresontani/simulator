@@ -5,6 +5,8 @@ class IllegalStateToPerformAction(Exception):pass
 
 class NoInputToBeTransformed(Exception):pass
 
+class InvalidInputLoaded(Exception):pass
+
 
 class GoodProducer(object):
     IDLE, STARTED, PRODUCING = 0, 1, 2
@@ -19,6 +21,7 @@ class GoodProducer(object):
 
     def initialize(self):
 	self.rate = self.config.get("rate_by_minute", 1)
+	self.input_types = self.config.get("input_types", None)
 
     def get_state(self):
 	return self.state.get_state()
@@ -29,14 +32,25 @@ class GoodProducer(object):
     def affect(self, labour):
 	self.labour = labour
 
-    def load(self, input):
-	self.inputs  = input
+    def load(self, inputs):
+        operation = LoadOperation(self)
+        operation.perform(inputs)
 
     def set_state(self, state_class):
 	self.state = state_class(self)
 
     def get_outputs(self):
 	return self.outputs
+
+class Operation(object):
+    def __init__(self, good_producer):
+	self.good_producer = good_producer
+
+class LoadOperation(Operation):
+    def perform(self, inputs):
+	if not self.good_producer.input_types or inputs.name not in self.good_producer.input_types:
+	    raise InvalidInputLoaded(inputs.name)
+	self.good_producer.inputs  = inputs
 
 class GoodProducerState(object):
 
