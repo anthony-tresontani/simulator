@@ -1,4 +1,4 @@
-
+from output import Output
 class NoLabourToPerformAction(Exception):pass
 
 class IllegalStateToPerformAction(Exception):pass
@@ -9,10 +9,16 @@ class NoInputToBeTransformed(Exception):pass
 class GoodProducer(object):
     IDLE, STARTED, PRODUCING = 0, 1, 2
 
-    def __init__(self):
+    def __init__(self, config={}):
 	self.labour = None
-	self.inputs = None
+	self.inputs = []
+        self.outputs = []
+	self.config = config
+	self.initialize()
         self.set_state(GoodProducerIDLEState)
+
+    def initialize(self):
+	self.rate = self.config.get("rate_by_minute", 1)
 
     def get_state(self):
 	return self.state.get_state()
@@ -29,6 +35,8 @@ class GoodProducer(object):
     def set_state(self, state_class):
 	self.state = state_class(self)
 
+    def get_outputs(self):
+	return self.outputs
 
 class GoodProducerState(object):
 
@@ -67,6 +75,19 @@ class GoodProducerSTARTEDState(GoodProducerState):
 	if not self.good_producer.inputs:
 	    raise NoInputToBeTransformed()
         self.good_producer.set_state(GoodProducerPRODUCINGState)
+	self.good_producer.produce(minutes)
 
 class GoodProducerPRODUCINGState(GoodProducerState):
     STATUS = GoodProducer.PRODUCING
+
+    def produce(self, minutes):
+	progress = 0
+        while minutes > 0:
+	    if not self.good_producer.inputs:
+                self.good_producer.set_state(GoodProducerSTARTEDState)
+		return
+	    progress += self.good_producer.rate
+	    if progress == 1:
+            	self.good_producer.outputs.append(Output())
+		progress = 0
+	    minutes -= 1
