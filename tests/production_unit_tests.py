@@ -1,7 +1,7 @@
 import unittest
 
 from core.goodproducer import GoodProducer
-from core.goodproducer import IllegalStateToPerformAction, InvalidInputLoaded, CannotProduce, NoLabourToPerformAction
+from core.goodproducer import IllegalStateToPerformAction, InvalidInputLoaded, CannotProduce, NoLabourToPerformAction, StartOperation, StopOperation, LoadOperation
 
 from core.input import Input
 from core.worker import Worker 
@@ -26,37 +26,37 @@ class ProductionUnitTest(unittest.TestCase):
 
     def test_start_with_worker(self):
 	self.gp.affect(self.worker)
-	self.gp.start()
+	self.gp.perform_operation(StartOperation())
 	self.assertEquals(self.gp.get_state(), GoodProducer.STARTED)
 
     def test_stop_good_producer(self):
         self.gp.affect(self.worker)
- 	self.gp.start()
+ 	self.gp.perform_operation(StartOperation())
 
-        self.gp.stop()
+        self.gp.perform_operation(StopOperation())
         self.assertEquals(self.gp.get_state(), GoodProducer.IDLE)
 
     def test_illegal_state(self):
-        self.assertRaises(IllegalStateToPerformAction, self.gp.stop)
+        self.assertRaises(IllegalStateToPerformAction, self.gp.perform_operation, StopOperation())
 
     def test_produce_without_input(self):
 	self.gp.affect(self.worker)
-        self.gp.start()
+        self.gp.perform_operation(StartOperation())
         self.assertRaises(CannotProduce, self.gp.produce, 1)
 
     def test_produce_with_input(self):
 	self.gp.affect(self.worker)
-	self.gp.load(self.inputs)
+	self.gp.perform_operation(LoadOperation(self.inputs))
 	
-	self.gp.start()
+	self.gp.perform_operation(StartOperation())
 	self.gp.produce(1)
         self.assertEquals(self.gp.get_state(), GoodProducer.PRODUCING)
 
     def test_production_output(self):
         self.gp.affect(self.worker)
-        self.gp.load(self.inputs)
+        self.gp.perform_operation(LoadOperation(self.inputs))
             
-        self.gp.start()
+        self.gp.perform_operation(StartOperation())
         self.gp.produce(1)	
 	self.assertEquals(len(self.gp.get_outputs()), 1) 
 
@@ -69,22 +69,22 @@ class ProductionUnitTest(unittest.TestCase):
 	slower_gp = GoodProducer(spec, config)
 
         slower_gp.affect(self.worker)
-        slower_gp.load(self.inputs)
+        slower_gp.perform_operation(LoadOperation(self.inputs))
                 
-        slower_gp.start()
+        slower_gp.perform_operation(StartOperation())
         slower_gp.produce(2)    
         self.assertEquals(len(slower_gp.get_outputs()), 1)
 
     def test_invalid_input(self):
 	input = Input("rocks")
 	
-	self.assertRaises(InvalidInputLoaded, self.gp.load, input)
+	self.assertRaises(InvalidInputLoaded, self.gp.perform_operation, LoadOperation(input))
 
     def test_out_of_stock(self):
 	self.gp.affect(self.worker)
         self.gp.load(self.inputs)
 
-        self.gp.start()
+        self.gp.perform_operation(StartOperation())
 	self.assertRaises(CannotProduce, self.gp.produce, 3)
 	
     def test_multiple_inputs(self):
@@ -96,16 +96,16 @@ class ProductionUnitTest(unittest.TestCase):
 	four_a_pain = GoodProducer(spec, config)
 
         four_a_pain.affect(self.worker)
-        four_a_pain.load(Input("flour", 2))
-	four_a_pain.start()
+        four_a_pain.perform_operation(LoadOperation(Input("flour", 2)))
+	four_a_pain.perform_operation(StartOperation())
         
 	self.assertRaises(CannotProduce, four_a_pain.produce, 5)
     
     def test_complete_failure(self):
 	self.gp.affect(self.worker)
-        self.gp.load(self.inputs)
+        self.gp.perform_operation(LoadOperation(self.inputs))
 
-        self.gp.start()
+        self.gp.perform_operation(StartOperation())
         self.gp.produce(1)
 	self.gp.add_event(Failure())
         self.assertEquals(self.gp.get_state(), GoodProducer.FAILURE)
