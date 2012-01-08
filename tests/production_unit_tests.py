@@ -4,8 +4,8 @@ from core.goodproducer import GoodProducer
 from core.goodproducer import IllegalStateToPerformAction, InvalidInputLoaded, CannotProduce, NoLabourToPerformAction
 
 from core.input import Input
-from core.labour import Labour
-from core.specification import Specification, InputConstraint
+from core.worker import Worker 
+from core.specification import Specification, InputConstraint, SkillConstraint
 from core.event import Failure, Fix
 
 
@@ -15,22 +15,22 @@ class ProductionUnitTest(unittest.TestCase):
         spec = Specification()
 	spec.add(InputConstraint(type="yarn", quantity=1))
     	self.gp = GoodProducer(spec)
-        self.labour = Labour()
+        self.worker = Worker()
         self.inputs = Input("yarn")
 
     def test_state_idle(self):
 	self.assertEquals(self.gp.get_state(), GoodProducer.IDLE)
 
-    def test_cannot_start_without_labour(self):
+    def test_cannot_start_without_worker(self):
         self.assertRaises(NoLabourToPerformAction, self.gp.start)
 
-    def test_start_with_labour(self):
-	self.gp.affect(self.labour)
+    def test_start_with_worker(self):
+	self.gp.affect(self.worker)
 	self.gp.start()
 	self.assertEquals(self.gp.get_state(), GoodProducer.STARTED)
 
     def test_stop_good_producer(self):
-        self.gp.affect(self.labour)
+        self.gp.affect(self.worker)
  	self.gp.start()
 
         self.gp.stop()
@@ -40,12 +40,12 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertRaises(IllegalStateToPerformAction, self.gp.stop)
 
     def test_produce_without_input(self):
-	self.gp.affect(self.labour)
+	self.gp.affect(self.worker)
         self.gp.start()
         self.assertRaises(CannotProduce, self.gp.produce, 1)
 
     def test_produce_with_input(self):
-	self.gp.affect(self.labour)
+	self.gp.affect(self.worker)
 	self.gp.load(self.inputs)
 	
 	self.gp.start()
@@ -53,7 +53,7 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertEquals(self.gp.get_state(), GoodProducer.PRODUCING)
 
     def test_production_output(self):
-        self.gp.affect(self.labour)
+        self.gp.affect(self.worker)
         self.gp.load(self.inputs)
             
         self.gp.start()
@@ -68,7 +68,7 @@ class ProductionUnitTest(unittest.TestCase):
 
 	slower_gp = GoodProducer(spec, config)
 
-        slower_gp.affect(self.labour)
+        slower_gp.affect(self.worker)
         slower_gp.load(self.inputs)
                 
         slower_gp.start()
@@ -81,7 +81,7 @@ class ProductionUnitTest(unittest.TestCase):
 	self.assertRaises(InvalidInputLoaded, self.gp.load, input)
 
     def test_out_of_stock(self):
-	self.gp.affect(self.labour)
+	self.gp.affect(self.worker)
         self.gp.load(self.inputs)
 
         self.gp.start()
@@ -95,14 +95,14 @@ class ProductionUnitTest(unittest.TestCase):
 
 	four_a_pain = GoodProducer(spec, config)
 
-        four_a_pain.affect(self.labour)
+        four_a_pain.affect(self.worker)
         four_a_pain.load(Input("flour", 2))
 	four_a_pain.start()
         
 	self.assertRaises(CannotProduce, four_a_pain.produce, 5)
     
     def test_complete_failure(self):
-	self.gp.affect(self.labour)
+	self.gp.affect(self.worker)
         self.gp.load(self.inputs)
 
         self.gp.start()
@@ -112,3 +112,11 @@ class ProductionUnitTest(unittest.TestCase):
 
         self.gp.add_event(Fix())
 	self.assertEquals(self.gp.get_state(), GoodProducer.STARTED)
+
+    def test_technical_machine(self):
+	spec = Specification()
+        spec.add(InputConstraint(type="iron", quantity=1))
+
+	self.gp.start_operation.add_constraint(SkillConstraint(skill_name="blacksmith"))
+        self.assertRaises(CannotProduce, self.gp.produce, 1)
+

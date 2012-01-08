@@ -31,3 +31,12 @@ class InputConstraint(object):
 	    if input.type == self.type and input.quantity >= self.quantity:
 		return True
 	return False	
+
+class SkillConstraint(object):
+
+    def __init__(self, skill_name):
+	self.skill_name = skill_name
+
+
+    def validate(self, workers):
+ 	return self.skill_name in worker.skills

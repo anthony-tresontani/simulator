@@ -1,20 +1,28 @@
 from output import Output
+
+
 class NoLabourToPerformAction(Exception):pass
+
 
 class IllegalStateToPerformAction(Exception):pass
 
+
 class CannotProduce(Exception):pass
+
 
 class InvalidInputLoaded(Exception):pass
 
+
+class CannotPerformOperation(Exception):pass
 
 class GoodProducer(object):
     IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
 
     def __init__(self, spec, config={}):
-	self.labour = None
+	self.worker = None
 	self.inputs = None 
         self.outputs = []
+	self.start_operation = StartOperation(self)
 	self.config = config
 	self.spec = spec
 	self.initialize()
@@ -30,14 +38,16 @@ class GoodProducer(object):
     def __getattr__(self, name):
 	return getattr(self.state, name)
 
-    def affect(self, labour):
-	self.labour = labour
+
+    def affect(self, worker):
+	self.worker = worker
 
     def load(self, inputs):
         operation = LoadOperation(self)
         operation.perform(inputs)
 
     def set_state(self, state_class):
+	print "Change state to %s" % state_class
 	self.state = state_class(self)
 
     def get_outputs(self):
@@ -46,15 +56,29 @@ class GoodProducer(object):
     def add_event(self, event):
 	event.react(self)
 
+
 class Operation(object):
     def __init__(self, good_producer):
 	self.good_producer = good_producer
+	self.constraints = []
+
+    def add_constraint(self, constraint):
+	self.constraints.append(constraint)
+
 
 class LoadOperation(Operation):
     def perform(self, inputs):
 	if not self.good_producer.spec.validate_any(inputs):
 	    raise InvalidInputLoaded()
 	self.good_producer.inputs  = inputs
+
+
+class StartOperation(Operation):
+    def perform(self):
+	for constraint in self.constraints:
+	    if not constrainte.validate(self.good_producer):
+		raise CannotPerformOperation()
+	self.good_producer.set_state(GoodProducerSTARTEDState)
 
 
 class GoodProducerState(object):
@@ -74,25 +98,28 @@ class GoodProducerState(object):
     def produce(self, minutes):
         raise IllegalStateToPerformAction("Action stop")
 
+
 class GoodProducerIDLEState(GoodProducerState):
     STATUS = GoodProducer.IDLE
 
     def start(self):
-        if not self.good_producer.labour:
+        if not self.good_producer.worker:
             raise NoLabourToPerformAction()
-        self.good_producer.set_state(GoodProducerSTARTEDState)
+        self.good_producer.start_operation.perform()
+
 
 class GoodProducerSTARTEDState(GoodProducerState):
     STATUS = GoodProducer.STARTED
 
     def stop(self):
-	if not self.good_producer.labour:
+	if not self.good_producer.worker:
             raise NoLabourToPerformAction()
 	self.good_producer.set_state(GoodProducerIDLEState)
 
     def produce(self, minutes):
         self.good_producer.set_state(GoodProducerPRODUCINGState)
 	self.good_producer.produce(minutes)
+
 
 class GoodProducerPRODUCINGState(GoodProducerState):
     STATUS = GoodProducer.PRODUCING
@@ -110,6 +137,7 @@ class GoodProducerPRODUCINGState(GoodProducerState):
             	self.good_producer.outputs.append(Output())
 		progress = 0
 	    production_time -= 1
+
 
 class GoodProducerFAILUREState(GoodProducerState):
     STATUS = GoodProducer.FAILURE
