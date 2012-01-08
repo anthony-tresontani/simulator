@@ -6,9 +6,10 @@ from core.goodproducer import IllegalStateToPerformAction, InvalidInputLoaded, C
 from core.input import Input
 from core.labour import Labour
 from core.specification import Specification, InputConstraint
+from core.event import Failure, Fix
 
 
-class GoodProducerTest(unittest.TestCase):
+class ProductionUnitTest(unittest.TestCase):
 
     def setUp(self):
         spec = Specification()
@@ -101,8 +102,13 @@ class GoodProducerTest(unittest.TestCase):
 	self.assertRaises(CannotProduce, four_a_pain.produce, 5)
     
     def test_complete_failure(self):
-	 self.assertTrue(False)
+	self.gp.affect(self.labour)
+        self.gp.load(self.inputs)
 
-    def test_partial_failure(self):
-        # slow down the machine
-	self.assertTrue(False)
+        self.gp.start()
+        self.gp.produce(1)
+	self.gp.add_event(Failure())
+        self.assertEquals(self.gp.get_state(), GoodProducer.FAILURE)
+
+        self.gp.add_event(Fix())
+	self.assertEquals(self.gp.get_state(), GoodProducer.STARTED)

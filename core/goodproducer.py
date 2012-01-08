@@ -9,7 +9,7 @@ class InvalidInputLoaded(Exception):pass
 
 
 class GoodProducer(object):
-    IDLE, STARTED, PRODUCING = 0, 1, 2
+    IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
 
     def __init__(self, spec, config={}):
 	self.labour = None
@@ -42,6 +42,9 @@ class GoodProducer(object):
 
     def get_outputs(self):
 	return self.outputs
+
+    def add_event(self, event):
+	event.react(self)
 
 class Operation(object):
     def __init__(self, good_producer):
@@ -107,3 +110,6 @@ class GoodProducerPRODUCINGState(GoodProducerState):
             	self.good_producer.outputs.append(Output())
 		progress = 0
 	    production_time -= 1
+
+class GoodProducerFAILUREState(GoodProducerState):
+    STATUS = GoodProducer.FAILURE
