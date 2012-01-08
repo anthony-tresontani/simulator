@@ -1,17 +1,19 @@
 import unittest
 
 from core.goodproducer import GoodProducer
-from core.goodproducer import NoLabourToPerformAction, IllegalStateToPerformAction, NoInputToBeTransformed, InvalidInputLoaded
+from core.goodproducer import IllegalStateToPerformAction, InvalidInputLoaded, CannotProduce, NoLabourToPerformAction
 
 from core.input import Input
 from core.labour import Labour
+from core.specification import Specification, InputConstraint
 
 
 class GoodProducerTest(unittest.TestCase):
 
     def setUp(self):
-	config = {"input_types":["yarn"]}
-    	self.gp = GoodProducer(config)
+        spec = Specification()
+	spec.add(InputConstraint(type="yarn", quantity=1))
+    	self.gp = GoodProducer(spec)
         self.labour = Labour()
         self.inputs = Input("yarn")
 
@@ -39,7 +41,7 @@ class GoodProducerTest(unittest.TestCase):
     def test_produce_without_input(self):
 	self.gp.affect(self.labour)
         self.gp.start()
-        self.assertRaises(NoInputToBeTransformed, self.gp.produce, 1)
+        self.assertRaises(CannotProduce, self.gp.produce, 1)
 
     def test_produce_with_input(self):
 	self.gp.affect(self.labour)
@@ -59,8 +61,11 @@ class GoodProducerTest(unittest.TestCase):
 
     def test_slower_machine(self):
 	config = {'rate_by_minute': 0.5,
-		  "input_types":["yarn"],}
-	slower_gp = GoodProducer(config)
+		  "input_types":[("yarn",1)],}
+	spec = Specification()
+	spec.add(InputConstraint(type="yarn", quantity=1))
+
+	slower_gp = GoodProducer(spec, config)
 
         slower_gp.affect(self.labour)
         slower_gp.load(self.inputs)
@@ -74,14 +79,26 @@ class GoodProducerTest(unittest.TestCase):
 	
 	self.assertRaises(InvalidInputLoaded, self.gp.load, input)
 
-    
     def test_out_of_stock(self):
-	self.assertTrue(False)
+	self.gp.affect(self.labour)
+        self.gp.load(self.inputs)
 
-
+        self.gp.start()
+	self.assertRaises(CannotProduce, self.gp.produce, 3)
+	
     def test_multiple_inputs(self):
-	self.assertTrue(False)
+        config = {'rate_by_minute': 0.2}
+	spec = Specification()
+	spec.add(InputConstraint(type="flour", quantity=2))
+	spec.add(InputConstraint(type="water", quantity=1))
 
+	four_a_pain = GoodProducer(spec, config)
+
+        four_a_pain.affect(self.labour)
+        four_a_pain.load(Input("flour", 2))
+	four_a_pain.start()
+        
+	self.assertRaises(CannotProduce, four_a_pain.produce, 5)
     
     def test_complete_failure(self):
 	 self.assertTrue(False)

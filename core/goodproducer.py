@@ -3,7 +3,7 @@ class NoLabourToPerformAction(Exception):pass
 
 class IllegalStateToPerformAction(Exception):pass
 
-class NoInputToBeTransformed(Exception):pass
+class CannotProduce(Exception):pass
 
 class InvalidInputLoaded(Exception):pass
 
@@ -11,11 +11,12 @@ class InvalidInputLoaded(Exception):pass
 class GoodProducer(object):
     IDLE, STARTED, PRODUCING = 0, 1, 2
 
-    def __init__(self, config={}):
+    def __init__(self, spec, config={}):
 	self.labour = None
-	self.inputs = []
+	self.inputs = None 
         self.outputs = []
 	self.config = config
+	self.spec = spec
 	self.initialize()
         self.set_state(GoodProducerIDLEState)
 
@@ -48,9 +49,10 @@ class Operation(object):
 
 class LoadOperation(Operation):
     def perform(self, inputs):
-	if not self.good_producer.input_types or inputs.name not in self.good_producer.input_types:
-	    raise InvalidInputLoaded(inputs.name)
+	if not self.good_producer.spec.validate_any(inputs):
+	    raise InvalidInputLoaded()
 	self.good_producer.inputs  = inputs
+
 
 class GoodProducerState(object):
 
@@ -86,22 +88,22 @@ class GoodProducerSTARTEDState(GoodProducerState):
 	self.good_producer.set_state(GoodProducerIDLEState)
 
     def produce(self, minutes):
-	if not self.good_producer.inputs:
-	    raise NoInputToBeTransformed()
         self.good_producer.set_state(GoodProducerPRODUCINGState)
 	self.good_producer.produce(minutes)
 
 class GoodProducerPRODUCINGState(GoodProducerState):
     STATUS = GoodProducer.PRODUCING
 
-    def produce(self, minutes):
+    def produce(self, production_time):
 	progress = 0
-        while minutes > 0:
-	    if not self.good_producer.inputs:
+        inputs = self.good_producer.inputs
+        while production_time > 0:
+	    if not self.good_producer.spec.validate_all(inputs):
                 self.good_producer.set_state(GoodProducerSTARTEDState)
-		return
+		raise CannotProduce()
 	    progress += self.good_producer.rate
 	    if progress == 1:
+		inputs.quantity -= 1
             	self.good_producer.outputs.append(Output())
 		progress = 0
-	    minutes -= 1
+	    production_time -= 1
