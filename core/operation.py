@@ -18,7 +18,8 @@ class Operation(object):
 
     def check_all(self):
         self.check_valid_state()
-        self.check()
+        if hasattr(self, "check"):
+            self.check()
 
     def check_valid_state(self):
         if not self.production_unit.get_state() in self.valid_state:
@@ -44,8 +45,22 @@ class LoadOperation(Operation):
             raise InvalidInputLoaded()
 
     def perform(self):
-        self.production_unit.inputs.append(self.inputs)
+        self.production_unit.inputs.append(copy.copy(self.inputs))
 
+
+class UnloadOperation(Operation):
+    valid_state = [ProductionUnit.IDLE, ProductionUnit.STARTED]
+
+    def __init__(self, quantity, zone, *args, **kwargs):
+        self.quantity = quantity
+        self.zone = zone
+        super(UnloadOperation, self).__init__(*args, **kwargs)
+
+    def perform(self):
+        for i in range(self.quantity):
+            outputs = self.production_unit.stocking_zone.stock
+            if outputs:
+                self.zone.add_to_stock(outputs.pop())
 
 class StartOperation(Operation):
     valid_state = [ProductionUnit.IDLE]
@@ -71,6 +86,7 @@ class ProduceOperation(Operation):
     def check(self):pass
 
     def perform(self):
+        self.elapsed_time = 0
         if not self.production_unit.get_state() == ProductionUnit.PRODUCING:
             self.production_unit.set_state(ProductionUnitPRODUCINGState)
 
@@ -108,12 +124,9 @@ class Process(object):
 
     def run(self, time):
         while time >0:
-            first_operation = copy.deepcopy(self.operations[0])
-            self.production_unit.perform_operation(first_operation)
-            time -= first_operation.time_to_perform
-            second_operation = copy.deepcopy(self.operations[1])
-            try:
-                self.production_unit.perform_operation(second_operation)
-            except CannotProduce:
-                pass
-            time -= second_operation.get_elapsed_time()
+            for operation in self.operations:
+                try:
+                    self.production_unit.perform_operation(operation)
+                except CannotProduce:
+                    pass
+                time -= operation.get_elapsed_time()
