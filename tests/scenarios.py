@@ -31,8 +31,8 @@ class TestScenario(TestCase):
 
     def test_hour_of_production_scenario_with_more_load(self):
         # load then produce then load, etc
-        # 1 minute to load, 1 minute to produce 1, sequentially
-        # leading to 30 produce in one hour
+        # 1 minute to load 2, 2 minutes to produce 1, sequentially
+        # leading to 40 produce in one hour
         load_op = LoadOperation(Material(type="input", quantity=2), time_to_perform=1)
         produce_op = ProduceOperation()
         operation_list = [load_op, ProduceOperation()]
@@ -40,3 +40,7 @@ class TestScenario(TestCase):
         process.run(60)
 
         self.assertEquals(len(self.machine.get_outputs()), 40)
+
+    def test_hour_of_production_with_unloading(self):
+        # Load for 1 minute, produce for 3 minutes, unload for 2 minutes
+        pass

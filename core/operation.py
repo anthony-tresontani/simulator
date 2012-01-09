@@ -84,7 +84,7 @@ class ProduceOperation(Operation):
             if self.progress == 1:
                 for input in inputs:
                     input.consume(spec)
-                self.production_unit.outputs.extend(spec.output_materials)
+                self.production_unit.set_output(spec.output_materials)
                 self.progress = 0
             self.elapsed_time += 1
             if self.production_time:

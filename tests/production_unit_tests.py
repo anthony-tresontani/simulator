@@ -1,7 +1,7 @@
 import unittest
 from core.operation import LoadOperation, StartOperation, StopOperation, ProduceOperation
 
-from core.production_unit import ProductionUnit, CannotPerformOperation
+from core.production_unit import ProductionUnit, CannotPerformOperation, StockingZone, Event
 from core.production_unit import IllegalStateToPerformAction, InvalidInputLoaded, CannotProduce, NoWorkerToPerformAction
 
 from core.material import Material
@@ -32,12 +32,12 @@ class ProductionUnitTest(unittest.TestCase):
         self.loaded_production_unit.perform_operation(LoadOperation(self.inputs))
 
         config = {'rate_by_minute': 0.2}
-        spec = Specification()
-        spec.add(MaterialInputConstraint(type="flour", quantity=2))
-        spec.add(MaterialInputConstraint(type="water", quantity=1))
-        spec.add_output_material(Material("bread", 1))
+        spec_four = Specification()
+        spec_four.add(MaterialInputConstraint(type="flour", quantity=2))
+        spec_four.add(MaterialInputConstraint(type="water", quantity=1))
+        spec_four.add_output_material(Material("bread", 1))
 
-        self.four_a_pain = ProductionUnit(spec, config)
+        self.four_a_pain = ProductionUnit(spec_four, config)
 
         self.four_a_pain.affect(self.worker)
         self.four_a_pain.perform_operation(LoadOperation(Material("flour", 2)))
@@ -131,3 +131,23 @@ class ProductionUnitTest(unittest.TestCase):
         self.four_a_pain.perform_operation(LoadOperation(Material("water", 1)))
         self.four_a_pain.perform_operation(ProduceOperation(5))
         self.assertEquals(self.four_a_pain.get_outputs()[0].type, "bread")
+
+    def test_production_unit_with_stocking_area(self):
+        stock_zone = StockingZone()
+        self.loaded_production_unit.add_stocking_zone(stock_zone)
+
+        self.loaded_production_unit.perform_operation(ProduceOperation(1))
+
+        self.assertEquals(stock_zone.count(), 1)
+
+    def test_production_unit_with_limited_stocking_area(self):
+        stock_zone = StockingZone(size=3)
+        self.loaded_production_unit.add_stocking_zone(stock_zone)
+
+        self.loaded_production_unit.perform_operation(LoadOperation(Material("yarn", 10)))
+        try:
+            self.loaded_production_unit.perform_operation(ProduceOperation(5))
+        except Event:
+            pass
+
+        self.assertEquals(stock_zone.count(), 3)

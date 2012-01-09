@@ -7,14 +7,18 @@ class NoWorkerToPerformAction(Exception): pass
 class IllegalStateToPerformAction(Exception): pass
 
 
-class CannotProduce(Exception): pass
+class Event(Exception):pass
+
+class CannotProduce(Event): pass
 
 
-class InvalidInputLoaded(Exception): pass
+class InvalidInputLoaded(Event): pass
 
 
-class CannotPerformOperation(Exception): pass
+class CannotPerformOperation(Event): pass
 
+
+class StockIsFull(Event):pass
 
 class ProductionUnit(object):
     IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
@@ -23,6 +27,7 @@ class ProductionUnit(object):
         self.worker = None
         self.inputs = []
         self.outputs = []
+        self.stocking_zone = None
         self.config = config
         self.spec = spec
         self.initialize()
@@ -53,6 +58,17 @@ class ProductionUnit(object):
         operation.check_all()
         operation.perform()
 
+    def set_output(self, outputs):
+        self.outputs = outputs
+        if self.stocking_zone:
+            self.stocking_zone.add_to_stock(outputs)
+
+    def add_stocking_zone(self, zone):
+        if self.stocking_zone:
+            self.stocking_zone.add_zone(self.stocking_zone)
+        else:
+            self.stocking_zone = zone
+
 
 class ProductionUnitState(object):
     def __init__(self, production_unit):
@@ -76,3 +92,20 @@ class ProductionUnitPRODUCINGState(ProductionUnitState):
 
 class ProductionUnitFAILUREState(ProductionUnitState):
     STATUS = ProductionUnit.FAILURE
+
+class StockingZone():
+
+    def __init__(self, size=None):
+        self.stock = []
+        self.size = size # None means unlimited
+
+    def count(self):
+        return len(self.stock)
+
+    def add_to_stock(self, elements):
+        if self.size and self.count() >= self.size:
+            raise StockIsFull()
+        self.stock.append(elements)
+
+    def add_zone(self, zone):
+        pass
