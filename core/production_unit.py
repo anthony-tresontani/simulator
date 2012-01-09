@@ -21,7 +21,7 @@ class ProductionUnit(object):
 
     def __init__(self, spec, config={}):
         self.worker = None
-        self.inputs = None
+        self.inputs = []
         self.outputs = []
         self.config = config
         self.spec = spec

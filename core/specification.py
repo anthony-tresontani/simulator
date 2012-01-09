@@ -4,9 +4,13 @@ class Specification(object):
 
     def __init__(self):
         self.constraints = []
+        self.output_materials = []
 
     def add(self, constraint):
         self.constraints.append(constraint)
+
+    def add_output_material(self, output_spec):
+        self.output_materials.append(output_spec)
 
     def __str__(self):
         return "\n".join(map(lambda x: x.__str__(), self.constraints))
@@ -24,7 +28,7 @@ class Specification(object):
             return False
         return any(constraint.validate(inputs) for constraint in self.constraints)
 
-class Constraint(object):
+class InputConstraint(object):
 
     def __str__(self):
         return str(self.__class__)
@@ -32,7 +36,7 @@ class Constraint(object):
     def __repr__(self):
         return self.__str__()
 
-class InputConstraint(Constraint):
+class MaterialInputConstraint(InputConstraint):
 
     def __init__(self, type, quantity):
         self.type = type
@@ -49,7 +53,7 @@ class InputConstraint(Constraint):
                 return True
         return False
 
-class SkillConstraint(Constraint):
+class SkillConstraint(InputConstraint):
 
     def get_message(self):
         return "Worker does not have the skill %s" % self.skill_name

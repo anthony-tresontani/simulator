@@ -4,23 +4,24 @@ from core.operation import LoadOperation, StartOperation, StopOperation, Produce
 from core.production_unit import ProductionUnit, CannotPerformOperation
 from core.production_unit import IllegalStateToPerformAction, InvalidInputLoaded, CannotProduce, NoWorkerToPerformAction
 
-from core.input import Input
+from core.material import Material
 from core.worker import Worker
-from core.specification import Specification, InputConstraint, SkillConstraint
+from core.specification import Specification, MaterialInputConstraint, SkillConstraint
 from core.event import Failure, Fix
 
 
 class ProductionUnitTest(unittest.TestCase):
     def setUp(self):
         spec = Specification()
-        spec.add(InputConstraint(type="yarn", quantity=1))
+        spec.add(MaterialInputConstraint(type="yarn", quantity=1))
+        spec.add_output_material(Material("whatever", 1))
         self.unaffected_production_unit = ProductionUnit(spec)
 
         self.worker = Worker()
         self.affected_production_unit = ProductionUnit(spec)
         self.affected_production_unit.affect(self.worker)
 
-        self.inputs = Input("yarn")
+        self.inputs = Material("yarn")
         self.started_production_unit = ProductionUnit(spec)
         self.started_production_unit.affect(self.worker)
         self.started_production_unit.perform_operation(StartOperation())
@@ -32,13 +33,14 @@ class ProductionUnitTest(unittest.TestCase):
 
         config = {'rate_by_minute': 0.2}
         spec = Specification()
-        spec.add(InputConstraint(type="flour", quantity=2))
-        spec.add(InputConstraint(type="water", quantity=1))
+        spec.add(MaterialInputConstraint(type="flour", quantity=2))
+        spec.add(MaterialInputConstraint(type="water", quantity=1))
+        spec.add_output_material(Material("bread", 1))
 
         self.four_a_pain = ProductionUnit(spec, config)
 
         self.four_a_pain.affect(self.worker)
-        self.four_a_pain.perform_operation(LoadOperation(Input("flour", 2)))
+        self.four_a_pain.perform_operation(LoadOperation(Material("flour", 2)))
         self.four_a_pain.perform_operation(StartOperation())
 
     def test_state_idle(self):
@@ -73,7 +75,8 @@ class ProductionUnitTest(unittest.TestCase):
         config = {'rate_by_minute': 0.5,
                   "input_types": [("yarn", 1)], }
         spec = Specification()
-        spec.add(InputConstraint(type="yarn", quantity=1))
+        spec.add(MaterialInputConstraint(type="yarn", quantity=1))
+        spec.add_output_material(Material("twisted yarn", 1))
 
         slower_gp = ProductionUnit(spec, config)
 
@@ -85,7 +88,7 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertEquals(len(slower_gp.get_outputs()), 1)
 
     def test_invalid_input(self):
-        input = Input("rocks")
+        input = Material("rocks")
         self.assertRaises(InvalidInputLoaded, self.affected_production_unit.perform_operation, LoadOperation(input))
 
     def test_out_of_stock(self):
@@ -104,7 +107,7 @@ class ProductionUnitTest(unittest.TestCase):
 
     def test_technical_machine(self):
         spec = Specification()
-        spec.add(InputConstraint(type="iron", quantity=1))
+        spec.add(MaterialInputConstraint(type="iron", quantity=1))
 
         start = StartOperation()
         start.add_constraint(SkillConstraint(skill_name="blacksmith"))
@@ -119,7 +122,12 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertEquals(tech_production_unit.get_state(), ProductionUnit.STARTED)
 
     def test_produce_consume_inputs(self):
-        self.four_a_pain.perform_operation(LoadOperation(Input("water", 1)))
+        self.four_a_pain.perform_operation(LoadOperation(Material("water", 1)))
         self.four_a_pain.perform_operation(ProduceOperation(5))
-        self.assertRaises(CannotProduce, self.four_a_pain.produce, 5)
+        self.assertRaises(CannotProduce, self.four_a_pain.perform_operation, ProduceOperation(5))
 
+
+    def test_produce_right_output(self):
+        self.four_a_pain.perform_operation(LoadOperation(Material("water", 1)))
+        self.four_a_pain.perform_operation(ProduceOperation(5))
+        self.assertEquals(self.four_a_pain.get_outputs()[0].type, "bread")

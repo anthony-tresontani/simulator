@@ -1,3 +1,4 @@
+from core.material import Material
 from core.output import Output
 from core.production_unit import IllegalStateToPerformAction, ProductionUnit, NoWorkerToPerformAction, InvalidInputLoaded, CannotPerformOperation, ProductionUnitSTARTEDState, ProductionUnitIDLEState, CannotProduce, ProductionUnitPRODUCINGState
 
@@ -37,7 +38,7 @@ class LoadOperation(Operation):
             raise InvalidInputLoaded()
 
     def perform(self):
-        self.production_unit.inputs  = self.inputs
+        self.production_unit.inputs.append(self.inputs)
 
 
 class StartOperation(Operation):
@@ -65,16 +66,18 @@ class ProduceOperation(Operation):
     def perform(self):
         if not self.production_unit.get_state() == ProductionUnit.PRODUCING:
             self.production_unit.set_state(ProductionUnitPRODUCINGState)
+
         inputs = self.production_unit.inputs
+        spec = self.production_unit.spec
         while self.production_time > 0:
-            import ipdb; ipdb.set_trace()
-            if not self.production_unit.spec.validate_all(inputs):
+            if not spec.validate_all(inputs):
                 self.production_unit.set_state(ProductionUnitSTARTEDState)
                 raise CannotProduce()
             self.progress += self.production_unit.rate
             if self.progress == 1:
-                inputs.quantity -= 1
-                self.production_unit.outputs.append(Output())
+                for input in inputs:
+                    input.consume(spec)
+                self.production_unit.outputs.extend(spec.output_materials)
                 self.progress = 0
             self.production_time -= 1
 
