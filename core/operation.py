@@ -1,4 +1,5 @@
-from core.production_unit import IllegalStateToPerformAction, ProductionUnit, NoWorkerToPerformAction, InvalidInputLoaded, CannotPerformOperation, ProductionUnitSTARTEDState, ProductionUnitIDLEState
+from core.output import Output
+from core.production_unit import IllegalStateToPerformAction, ProductionUnit, NoWorkerToPerformAction, InvalidInputLoaded, CannotPerformOperation, ProductionUnitSTARTEDState, ProductionUnitIDLEState, CannotProduce, ProductionUnitPRODUCINGState
 
 class Operation(object):
     def __init__(self, production_unit=None):
@@ -50,6 +51,32 @@ class StartOperation(Operation):
                 raise CannotPerformOperation()
         self.production_unit.set_state(ProductionUnitSTARTEDState)
 
+
+class ProduceOperation(Operation):
+    valid_state = [ProductionUnit.STARTED, ProductionUnit.PRODUCING]
+
+    def __init__(self, production_time, production_unit=None):
+        self.production_time = production_time
+        self.progress = 0
+        super(ProduceOperation, self).__init__(production_unit)
+
+    def check(self):pass
+
+    def perform(self):
+        if not self.production_unit.get_state() == ProductionUnit.PRODUCING:
+            self.production_unit.set_state(ProductionUnitPRODUCINGState)
+        inputs = self.production_unit.inputs
+        while self.production_time > 0:
+            import ipdb; ipdb.set_trace()
+            if not self.production_unit.spec.validate_all(inputs):
+                self.production_unit.set_state(ProductionUnitSTARTEDState)
+                raise CannotProduce()
+            self.progress += self.production_unit.rate
+            if self.progress == 1:
+                inputs.quantity -= 1
+                self.production_unit.outputs.append(Output())
+                self.progress = 0
+            self.production_time -= 1
 
 class StopOperation(Operation):
     valid_state = [ProductionUnit.STARTED]

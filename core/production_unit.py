@@ -35,10 +35,6 @@ class ProductionUnit(object):
     def get_state(self):
         return self.state.get_state()
 
-    def __getattr__(self, name):
-        return getattr(self.state, name)
-
-
     def affect(self, worker):
         self.worker = worker
 
@@ -65,9 +61,6 @@ class ProductionUnitState(object):
     def get_state(self):
         return self.STATUS
 
-    def produce(self, minutes):
-        raise IllegalStateToPerformAction("Produce")
-
 
 class ProductionUnitIDLEState(ProductionUnitState):
     STATUS = ProductionUnit.IDLE
@@ -76,32 +69,9 @@ class ProductionUnitIDLEState(ProductionUnitState):
 class ProductionUnitSTARTEDState(ProductionUnitState):
     STATUS = ProductionUnit.STARTED
 
-    def stop(self):
-        if not self.production_unit.worker:
-            raise NoWorkerToPerformAction()
-        self.production_unit.set_state(ProductionUnitIDLEState)
-
-    def produce(self, minutes):
-        self.production_unit.set_state(ProductionUnitPRODUCINGState)
-        self.production_unit.produce(minutes)
-
 
 class ProductionUnitPRODUCINGState(ProductionUnitState):
     STATUS = ProductionUnit.PRODUCING
-
-    def produce(self, production_time):
-        progress = 0
-        inputs = self.production_unit.inputs
-        while production_time > 0:
-            if not self.production_unit.spec.validate_all(inputs):
-                self.production_unit.set_state(ProductionUnitSTARTEDState)
-                raise CannotProduce()
-            progress += self.production_unit.rate
-            if progress == 1:
-                inputs.quantity -= 1
-                self.production_unit.outputs.append(Output())
-                progress = 0
-            production_time -= 1
 
 
 class ProductionUnitFAILUREState(ProductionUnitState):

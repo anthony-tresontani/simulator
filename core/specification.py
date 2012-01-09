@@ -8,6 +8,12 @@ class Specification(object):
     def add(self, constraint):
         self.constraints.append(constraint)
 
+    def __str__(self):
+        return "\n".join(map(lambda x: x.__str__(), self.constraints))
+
+    def __repr__(self):
+        return self.__str__()
+
     def validate_all(self, inputs):
         if not inputs:
             return False
@@ -18,12 +24,23 @@ class Specification(object):
             return False
         return any(constraint.validate(inputs) for constraint in self.constraints)
 
-class InputConstraint(object):
+class Constraint(object):
+
+    def __str__(self):
+        return str(self.__class__)
+
+    def __repr__(self):
+        return self.__str__()
+
+class InputConstraint(Constraint):
 
     def __init__(self, type, quantity):
         self.type = type
         self.quantity = quantity
- 
+
+    def __str__(self):
+        return "Validate input is type of %s" % self.type
+
     def validate(self, inputs):
         if not isinstance(inputs, collections.Iterable):
             inputs = [inputs]
@@ -32,10 +49,13 @@ class InputConstraint(object):
                 return True
         return False
 
-class SkillConstraint(object):
+class SkillConstraint(Constraint):
 
     def get_message(self):
         return "Worker does not have the skill %s" % self.skill_name
+
+    def __str__(self):
+        return "Validate worker has skill %s" % self.skill_name
 
     def __init__(self, skill_name):
         self.skill_name = skill_name

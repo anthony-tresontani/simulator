@@ -1,5 +1,5 @@
 import unittest
-from core.operation import LoadOperation, StartOperation, StopOperation
+from core.operation import LoadOperation, StartOperation, StopOperation, ProduceOperation
 
 from core.production_unit import ProductionUnit, CannotPerformOperation
 from core.production_unit import IllegalStateToPerformAction, InvalidInputLoaded, CannotProduce, NoWorkerToPerformAction
@@ -30,6 +30,17 @@ class ProductionUnitTest(unittest.TestCase):
         self.loaded_production_unit.perform_operation(StartOperation())
         self.loaded_production_unit.perform_operation(LoadOperation(self.inputs))
 
+        config = {'rate_by_minute': 0.2}
+        spec = Specification()
+        spec.add(InputConstraint(type="flour", quantity=2))
+        spec.add(InputConstraint(type="water", quantity=1))
+
+        self.four_a_pain = ProductionUnit(spec, config)
+
+        self.four_a_pain.affect(self.worker)
+        self.four_a_pain.perform_operation(LoadOperation(Input("flour", 2)))
+        self.four_a_pain.perform_operation(StartOperation())
+
     def test_state_idle(self):
         self.assertEquals(self.unaffected_production_unit.get_state(), ProductionUnit.IDLE)
 
@@ -47,14 +58,15 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertRaises(IllegalStateToPerformAction, self.unaffected_production_unit.perform_operation, StopOperation())
 
     def test_produce_without_input(self):
-        self.assertRaises(CannotProduce, self.started_production_unit.produce, 1)
+        produce = ProduceOperation(1)
+        self.assertRaises(CannotProduce, self.started_production_unit.perform_operation, produce)
 
     def test_produce_with_input(self):
-        self.loaded_production_unit.produce(1)
+        self.loaded_production_unit.perform_operation(ProduceOperation(1))
         self.assertEquals(self.loaded_production_unit.get_state(), ProductionUnit.PRODUCING)
 
     def test_production_output(self):
-        self.loaded_production_unit.produce(1)
+        self.loaded_production_unit.perform_operation(ProduceOperation(1))
         self.assertEquals(len(self.loaded_production_unit.get_outputs()), 1)
 
     def test_slower_machine(self):
@@ -69,7 +81,7 @@ class ProductionUnitTest(unittest.TestCase):
         slower_gp.perform_operation(LoadOperation(self.inputs))
 
         slower_gp.perform_operation(StartOperation())
-        slower_gp.produce(2)
+        slower_gp.perform_operation(ProduceOperation(2))
         self.assertEquals(len(slower_gp.get_outputs()), 1)
 
     def test_invalid_input(self):
@@ -77,24 +89,13 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertRaises(InvalidInputLoaded, self.affected_production_unit.perform_operation, LoadOperation(input))
 
     def test_out_of_stock(self):
-        self.assertRaises(CannotProduce, self.loaded_production_unit.produce, 3)
+        self.assertRaises(CannotProduce, self.loaded_production_unit.perform_operation, ProduceOperation(3))
 
     def test_multiple_inputs(self):
-        config = {'rate_by_minute': 0.2}
-        spec = Specification()
-        spec.add(InputConstraint(type="flour", quantity=2))
-        spec.add(InputConstraint(type="water", quantity=1))
-
-        four_a_pain = ProductionUnit(spec, config)
-
-        four_a_pain.affect(self.worker)
-        four_a_pain.perform_operation(LoadOperation(Input("flour", 2)))
-        four_a_pain.perform_operation(StartOperation())
-
-        self.assertRaises(CannotProduce, four_a_pain.produce, 5)
+        self.assertRaises(CannotProduce, self.four_a_pain.perform_operation, ProduceOperation(5))
 
     def test_complete_failure(self):
-        self.loaded_production_unit.produce(1)
+        self.loaded_production_unit.perform_operation(ProduceOperation(1))
         self.loaded_production_unit.add_event(Failure())
         self.assertEquals(self.loaded_production_unit.get_state(), ProductionUnit.FAILURE)
 
@@ -116,4 +117,9 @@ class ProductionUnitTest(unittest.TestCase):
         tech_production_unit.worker.skills.append("blacksmith")
         tech_production_unit.perform_operation(start)
         self.assertEquals(tech_production_unit.get_state(), ProductionUnit.STARTED)
+
+    def test_produce_consume_inputs(self):
+        self.four_a_pain.perform_operation(LoadOperation(Input("water", 1)))
+        self.four_a_pain.perform_operation(ProduceOperation(5))
+        self.assertRaises(CannotProduce, self.four_a_pain.produce, 5)
 
