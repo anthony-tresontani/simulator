@@ -44,7 +44,7 @@ class ProductionUnit(object):
         self.worker = worker
 
     def set_state(self, state_class):
-        print "Change state to %s" % state_class
+#        print "Change state to %s" % state_class
         self.state = state_class(self)
 
     def get_outputs(self):

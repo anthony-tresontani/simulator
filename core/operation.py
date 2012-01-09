@@ -61,6 +61,10 @@ class UnloadOperation(Operation):
             outputs = self.production_unit.stocking_zone.stock
             if outputs:
                 self.zone.add_to_stock(outputs.pop())
+        self.elapsed_time = 1
+
+    def get_elapsed_time(self):
+        return self.elapsed_time
 
 class StartOperation(Operation):
     valid_state = [ProductionUnit.IDLE]
@@ -85,6 +89,15 @@ class ProduceOperation(Operation):
 
     def check(self):pass
 
+    def do_step(self, inputs, spec):
+        self.progress += self.production_unit.rate
+        if self.progress == 1:
+            for input in inputs:
+                input.consume(spec)
+            self.production_unit.set_output(spec.output_materials)
+            self.progress = 0
+
+
     def perform(self):
         self.elapsed_time = 0
         if not self.production_unit.get_state() == ProductionUnit.PRODUCING:
@@ -96,12 +109,9 @@ class ProduceOperation(Operation):
             if not spec.validate_all(inputs):
                 self.production_unit.set_state(ProductionUnitSTARTEDState)
                 raise CannotProduce()
-            self.progress += self.production_unit.rate
-            if self.progress == 1:
-                for input in inputs:
-                    input.consume(spec)
-                self.production_unit.set_output(spec.output_materials)
-                self.progress = 0
+
+            self.do_step(inputs, spec)
+
             self.elapsed_time += 1
             if self.production_time:
                 self.production_time -= 1
@@ -121,12 +131,30 @@ class Process(object):
     def __init__(self, production_unit, operations):
         self.production_unit = production_unit
         self.operations = operations
+        self.progress = 0
 
     def run(self, time):
+        progress = self.progress
+        import pdb; pdb.set_trace()
         while time >0:
-            for operation in self.operations:
-                try:
-                    self.production_unit.perform_operation(operation)
-                except CannotProduce:
-                    pass
-                time -= operation.get_elapsed_time()
+            for operation in self.operations[self.progress:]:
+                print "operation", operation
+                if time >0:
+                    try:
+                        self.production_unit.perform_operation(operation)
+                    except CannotProduce:
+                        pass
+                    time -= 1
+                    progress +=1
+        self.progress = (self.progress + 1) %  len(self.operations)
+
+class MainProcess(object):
+    def __init__(self, process_list):
+        self.processes = process_list
+
+    def run(self, time):
+        for time in range(time):
+            print "time", time
+            for index, process in enumerate(self.processes):
+                print "process", process, "index", index
+                process.run(1)
