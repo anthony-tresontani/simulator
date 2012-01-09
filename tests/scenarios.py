@@ -29,7 +29,7 @@ class TestScenario(TestCase):
 
         self.assertEquals(len(self.machine.get_outputs()), 30)
 
-    def test_hour_of_production_scenario(self):
+    def test_hour_of_production_scenario_with_more_load(self):
         # load then produce then load, etc
         # 1 minute to load, 1 minute to produce 1, sequentially
         # leading to 30 produce in one hour

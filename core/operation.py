@@ -64,6 +64,7 @@ class ProduceOperation(Operation):
 
     def __init__(self, production_time=None, production_unit=None):
         self.production_time = production_time
+        self.infinite_production_time = self.production_time is None
         self.progress = 0
         super(ProduceOperation, self).__init__(production_unit)
 
@@ -75,7 +76,7 @@ class ProduceOperation(Operation):
 
         inputs = self.production_unit.inputs
         spec = self.production_unit.spec
-        while not self.production_time or self.production_time > 0:
+        while self.infinite_production_time or self.production_time > 0:
             if not spec.validate_all(inputs):
                 self.production_unit.set_state(ProductionUnitSTARTEDState)
                 raise CannotProduce()
