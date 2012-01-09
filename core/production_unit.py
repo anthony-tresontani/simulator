@@ -49,7 +49,7 @@ class ProductionUnit(object):
         event.react(self)
 
     def perform_operation(self, operation):
-        operation.production_unit    = self
+        operation.production_unit = self
         operation.check_all()
         operation.perform()
 
