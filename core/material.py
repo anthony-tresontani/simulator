@@ -13,5 +13,5 @@ class Material(object):
 
     def consume(self, spec):
         for constraint in spec.constraints:
-            if isinstance(constraint, MaterialInputConstraint) and constraint.type==self.type:
-                self.quantity -= constraint.quantity
+            if isinstance(constraint, MaterialInputConstraint) and constraint.material.type==self.type:
+                self.quantity -= constraint.material.quantity

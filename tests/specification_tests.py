@@ -7,8 +7,8 @@ class SpecificationTest(TestCase):
 
     def setUp(self):
         self.spec = Specification()
-        self.spec.add(MaterialInputConstraint(type="flour", quantity=1))
-        self.spec.add(MaterialInputConstraint(type="water", quantity=2))
+        self.spec.add(MaterialInputConstraint(Material(type="flour", quantity=1)))
+        self.spec.add(MaterialInputConstraint(Material(type="water", quantity=2)))
 
     def test_validate_all_spec(self):
         input1 = Material("flour", quantity=3)

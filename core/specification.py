@@ -38,18 +38,17 @@ class InputConstraint(object):
 
 class MaterialInputConstraint(InputConstraint):
 
-    def __init__(self, type, quantity):
-        self.type = type
-        self.quantity = quantity
+    def __init__(self, material):
+        self.material = material
 
     def __str__(self):
-        return "Validate input is type of %s" % self.type
+        return "Validate input is type of %s" % self.material.type
 
     def validate(self, inputs):
         if not isinstance(inputs, collections.Iterable):
             inputs = [inputs]
         for input in inputs:
-            if input.type == self.type and input.quantity >= self.quantity:
+            if input.type == self.material.type and input.quantity >= self.material.quantity:
                 return True
         return False
 

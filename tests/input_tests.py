@@ -7,7 +7,7 @@ class InputTest(TestCase):
     def test_consume(self):
         input = Material("input", 3)
         spec = Specification()
-        spec.add(MaterialInputConstraint("input", 2))
+        spec.add(MaterialInputConstraint(Material("input", 2)))
 
         input.consume(spec)
         self.assertEquals(input.quantity, 1)

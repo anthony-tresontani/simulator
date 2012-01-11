@@ -24,7 +24,7 @@ class InputValidForSpecConstraint(OperationalConstraint):
 
 
 class Operation(object):
-    def __init__(self, production_unit=None, time_to_perform=0):
+    def __init__(self, production_unit=None, time_to_perform=1):
         self.production_unit = production_unit
         self.constraints = []
         self.time_to_perform = time_to_perform
@@ -34,7 +34,7 @@ class Operation(object):
     def add_constraint(self, constraint):
         self.constraints.append(constraint)
 
-    def check_all(self, worker=None):
+    def check_all(self, worker):
         self.check_valid_state()
         self.check_constraints()
         if hasattr(self, "static_constraints"):
@@ -44,7 +44,7 @@ class Operation(object):
 
     def check_valid_state(self):
         if not self.production_unit.get_state() in self.valid_state:
-            raise IllegalStateToPerformAction("State %s" % self.production_unit.get_state())
+            raise IllegalStateToPerformAction("Action %s cannot be perform while in state %s" % (self, self.production_unit.state))
 
     def check_constraints(self):
         for constraint in self.constraints:
@@ -146,10 +146,11 @@ class ProduceOperation(Operation):
         spec = self.production_unit.spec
         if not spec.validate_all(inputs):
             self.production_unit.set_state(ProductionUnitSTARTEDState)
-            raise CannotProduce()
+            raise CannotProduce("Inputs %s does not match constraints %s" %(inputs, spec))
 
         self.progress += self.production_unit.rate
         if self.progress == 1:
+            logger.debug("Produce has completed a product")
             for input in inputs:
                 input.consume(spec)
             self.production_unit.set_output(spec.output_materials)
@@ -162,7 +163,7 @@ class StopOperation(Operation):
     valid_state = [ProductionUnit.STARTED]
     def check(self):pass
 
-    def perform(self):
+    def perform(self, worker):
         self.production_unit.set_state(ProductionUnitIDLEState)
 
 class Process(object):
@@ -172,14 +173,14 @@ class Process(object):
         self.operations = operations
         self.progress = 0
 
-    def run(self, time):
+    def run(self, worker, time):
         progress = self.progress
         while time >0:
             for operation in self.operations[self.progress:]:
                 logger.debug("Running operation %s at %s" % ( operation, time))
                 if time >0:
                     try:
-                        self.production_unit.perform_operation(operation)
+                        operation.perform(worker)
                     except CannotProduce:
                         pass
                     time -= 1
@@ -190,8 +191,8 @@ class MainProcess(object):
     def __init__(self, process_list):
         self.processes = process_list
 
-    def run(self, time):
+    def run(self, worker, time):
         for time in range(time):
             for index, process in enumerate(self.processes):
                 logger.debug("%d-Running process %s at %s" % (index, process, time))
-                process.run(1)
+                process.run(worker, 1)

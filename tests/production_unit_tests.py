@@ -13,7 +13,7 @@ from core.event import Failure, Fix
 class ProductionUnitTest(unittest.TestCase):
     def setUp(self):
         spec = Specification()
-        spec.add(MaterialInputConstraint(type="yarn", quantity=1))
+        spec.add(MaterialInputConstraint(Material(type="yarn", quantity=1)))
         spec.add_output_material(Material("whatever", 1))
         self.unaffected_production_unit = ProductionUnit(spec)
 
@@ -24,44 +24,43 @@ class ProductionUnitTest(unittest.TestCase):
         self.inputs = Material("yarn")
         self.started_production_unit = ProductionUnit(spec)
         self.started_production_unit.affect(self.worker)
-        self.started_production_unit.perform_operation(StartOperation())
+        StartOperation(production_unit=self.started_production_unit).perform(self.worker)
 
         self.loaded_production_unit = ProductionUnit(spec)
         self.loaded_production_unit.affect(self.worker)
-        self.loaded_production_unit.perform_operation(StartOperation())
-        self.loaded_production_unit.perform_operation(LoadOperation(self.inputs))
+        StartOperation(production_unit=self.loaded_production_unit).perform(self.worker)
+        LoadOperation(self.inputs, production_unit=self.loaded_production_unit).perform(self.worker)
 
         config = {'rate_by_minute': 0.2}
         spec_four = Specification()
-        spec_four.add(MaterialInputConstraint(type="flour", quantity=2))
-        spec_four.add(MaterialInputConstraint(type="water", quantity=1))
+        spec_four.add(MaterialInputConstraint(Material(type="flour", quantity=2)))
+        spec_four.add(MaterialInputConstraint(Material(type="water", quantity=1)))
         spec_four.add_output_material(Material("bread", 1))
 
         self.four_a_pain = ProductionUnit(spec_four, config)
 
         self.four_a_pain.affect(self.worker)
-        self.four_a_pain.perform_operation(LoadOperation(Material("flour", 2)))
-        self.four_a_pain.perform_operation(StartOperation())
+        LoadOperation(Material("flour", 2), production_unit=self.four_a_pain).perform(self.worker)
+        StartOperation(production_unit=self.four_a_pain).perform(self.worker)
 
     def test_state_idle(self):
         self.assertEquals(self.unaffected_production_unit.get_state(), ProductionUnit.IDLE)
 
     def test_cannot_start_without_worker(self):
-        self.assertRaises(NoWorkerToPerformAction, self.unaffected_production_unit.perform_operation, LoadOperation(self.inputs))
+        self.assertRaises(NoWorkerToPerformAction, LoadOperation(self.inputs, self.unaffected_production_unit).perform)
 
     def test_start_with_worker(self):
         self.assertEquals(self.started_production_unit.get_state(), ProductionUnit.STARTED)
 
     def test_stop_good_producer(self):
-        self.started_production_unit.perform_operation(StopOperation())
+        StopOperation(self.started_production_unit).perform(self.worker)
         self.assertEquals(self.started_production_unit.get_state(), ProductionUnit.IDLE)
 
     def test_illegal_state(self):
-        self.assertRaises(IllegalStateToPerformAction, self.unaffected_production_unit.perform_operation, StopOperation())
+        self.assertRaises(IllegalStateToPerformAction, StopOperation(self.unaffected_production_unit).perform, self.worker)
 
     def test_produce_without_input(self):
-        produce = ProduceOperation(1)
-        self.assertRaises(CannotProduce, self.started_production_unit.perform_operation, produce)
+        self.assertRaises(CannotProduce, ProduceOperation(production_unit=self.started_production_unit).perform, self.worker, during=1)
 
     def test_produce_with_input(self):
         self.loaded_production_unit.perform_operation(ProduceOperation(1))
@@ -75,16 +74,16 @@ class ProductionUnitTest(unittest.TestCase):
         config = {'rate_by_minute': 0.5,
                   "input_types": [("yarn", 1)], }
         spec = Specification()
-        spec.add(MaterialInputConstraint(type="yarn", quantity=1))
+        spec.add(MaterialInputConstraint(Material(type="yarn", quantity=1)))
         spec.add_output_material(Material("twisted yarn", 1))
 
         slower_gp = ProductionUnit(spec, config)
 
         slower_gp.affect(self.worker)
-        slower_gp.perform_operation(LoadOperation(self.inputs))
+        LoadOperation(self.inputs, slower_gp).perform(self.worker)
 
-        slower_gp.perform_operation(StartOperation())
-        slower_gp.perform_operation(ProduceOperation(2))
+        StartOperation(slower_gp).perform(self.worker)
+        ProduceOperation(slower_gp).perform(self.worker, during=2)
         self.assertEquals(len(slower_gp.get_outputs()), 1)
 
     def test_invalid_input(self):
@@ -107,18 +106,19 @@ class ProductionUnitTest(unittest.TestCase):
 
     def test_technical_machine(self):
         spec = Specification()
-        spec.add(MaterialInputConstraint(type="iron", quantity=1))
-
-        start = StartOperation()
-        start.add_constraint(SkillConstraint(skill_name="blacksmith"))
+        spec.add(MaterialInputConstraint(Material(type="iron", quantity=1)))
 
         tech_production_unit = ProductionUnit(spec)
-        tech_production_unit.affect(Worker())
 
-        self.assertRaises(CannotPerformOperation, tech_production_unit.perform_operation, start)
+        start_op = StartOperation(tech_production_unit)
+        start_op.add_constraint(SkillConstraint(skill_name="blacksmith"))
 
-        tech_production_unit.worker.skills.append("blacksmith")
-        tech_production_unit.perform_operation(start)
+        worker = Worker()
+
+        self.assertRaises(CannotPerformOperation, start_op.perform, worker)
+
+        worker.skills.append("blacksmith")
+        start_op.perform(worker)
         self.assertEquals(tech_production_unit.get_state(), ProductionUnit.STARTED)
 
     def test_produce_consume_inputs(self):
