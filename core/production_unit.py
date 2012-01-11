@@ -1,5 +1,6 @@
-from output import Output
+import logging
 
+logger = logging.getLogger()
 
 class NoWorkerToPerformAction(Exception): pass
 
@@ -53,7 +54,7 @@ class ProductionUnit(object):
     def add_event(self, event):
         event.react(self)
 
-    def perform_operation(self, operation):
+    def perform_operation(self, operation, during=1):
         operation.production_unit = self
         operation.check_all()
         operation.perform()
@@ -103,6 +104,7 @@ class StockingZone():
         return len(self.stock)
 
     def add_to_stock(self, elements):
+        logger.debug("Add a element to the stock. Stock(%d/%d)", self.count(), self.size)
         if self.size and self.count() >= self.size:
             raise StockIsFull()
         self.stock.append(elements)

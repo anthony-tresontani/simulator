@@ -69,4 +69,3 @@ class SkillConstraint(InputConstraint):
         if not worker:
             return False
         return self.skill_name in worker.skills
-
