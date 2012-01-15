@@ -19,15 +19,12 @@ class ProductionUnitTest(unittest.TestCase):
 
         self.worker = Worker()
         self.affected_production_unit = ProductionUnit(spec)
-        self.affected_production_unit.affect(self.worker)
 
         self.inputs = Material("yarn")
         self.started_production_unit = ProductionUnit(spec)
-        self.started_production_unit.affect(self.worker)
         StartOperation(production_unit=self.started_production_unit).perform(self.worker)
 
         self.loaded_production_unit = ProductionUnit(spec)
-        self.loaded_production_unit.affect(self.worker)
         StartOperation(production_unit=self.loaded_production_unit).perform(self.worker)
         LoadOperation(self.inputs, production_unit=self.loaded_production_unit).perform(self.worker)
 
@@ -39,7 +36,6 @@ class ProductionUnitTest(unittest.TestCase):
 
         self.four_a_pain = ProductionUnit(spec_four, config)
 
-        self.four_a_pain.affect(self.worker)
         LoadOperation(Material("flour", 2), production_unit=self.four_a_pain).perform(self.worker)
         StartOperation(production_unit=self.four_a_pain).perform(self.worker)
 
@@ -77,7 +73,6 @@ class ProductionUnitTest(unittest.TestCase):
 
         slower_gp = ProductionUnit(spec, config)
 
-        slower_gp.affect(self.worker)
         LoadOperation(self.inputs, slower_gp).perform(self.worker)
 
         StartOperation(slower_gp).perform(self.worker)

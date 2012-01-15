@@ -23,12 +23,26 @@ class CannotPerformOperation(Event): pass
 
 class StockIsFull(Event):pass
 
+
+class SignalDescriptor(object):
+    def __init__(self, initval=None, name='var'):
+        self.val = initval
+        self.name = name
+
+    def __get__(self, obj, objtype):
+        return self.val
+
+    def __set__(self, obj, val):
+        print 'SIGNALS'
+        self.val = val
+	
+
 class ProductionUnit(Entity):
     IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
+    state = SignalDescriptor(None)
 
     def __init__(self, spec, config={}):
 	super(ProductionUnit, self).__init__()
-        self.worker = None
         self.inputs = []
         self.outputs = []
         self.stocking_zone = None
@@ -43,9 +57,6 @@ class ProductionUnit(Entity):
 
     def get_state(self):
         return self.state.get_state()
-
-    def affect(self, worker):
-        self.worker = worker
 
     def set_state(self, state_class):
         self.state = state_class(self)
