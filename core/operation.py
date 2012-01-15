@@ -133,10 +133,6 @@ class StartOperation(Operation):
 class ProduceOperation(Operation):
     valid_state = [ProductionUnit.STARTED, ProductionUnit.PRODUCING]
 
-    def __init__(self, *args, **kwargs):
-        self.progress = 0
-        super(ProduceOperation, self).__init__(*args, **kwargs)
-
     def do_step(self, worker):
         if not self.production_unit.get_state() == ProductionUnit.PRODUCING:
             self.production_unit.set_state(ProductionUnitPRODUCINGState)

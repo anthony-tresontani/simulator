@@ -49,10 +49,10 @@ class ProductionUnitTest(unittest.TestCase):
     def test_cannot_start_without_worker(self):
         self.assertRaises(NoWorkerToPerformAction, LoadOperation(self.inputs, self.unaffected_production_unit).perform, None)
 
-    def test_start_with_worker(self):
+    def test_start_state(self):
         self.assertEquals(self.started_production_unit.get_state(), ProductionUnit.STARTED)
 
-    def test_stop_good_producer(self):
+    def test_stop_operation_return_to_idle_state(self):
         StopOperation(self.started_production_unit).perform(self.worker)
         self.assertEquals(self.started_production_unit.get_state(), ProductionUnit.IDLE)
 
@@ -62,15 +62,13 @@ class ProductionUnitTest(unittest.TestCase):
     def test_produce_without_input(self):
         self.assertRaises(CannotProduce, ProduceOperation(production_unit=self.started_production_unit).perform, self.worker, during=1)
 
-    def test_produce_with_input(self):
+    def test_produce_operation(self):
 	ProduceOperation(self.loaded_production_unit).perform(self.worker)
         self.assertEquals(self.loaded_production_unit.get_state(), ProductionUnit.PRODUCING)
+	self.assertEquals(len(self.loaded_production_unit.get_outputs()), 1)
+	self.assertEquals(self.loaded_production_unit.get_outputs()[0].type, "whatever")
 
-    def test_production_output(self):
-	ProduceOperation(self.loaded_production_unit).perform(self.worker)
-        self.assertEquals(len(self.loaded_production_unit.get_outputs()), 1)
-
-    def test_slower_machine(self):
+    def test_slower_machine_configuration(self):
         config = {'rate_by_minute': 0.5,
                   "input_types": [("yarn", 1)], }
         spec = Specification()
@@ -104,7 +102,7 @@ class ProductionUnitTest(unittest.TestCase):
         self.loaded_production_unit.add_event(Fix())
         self.assertEquals(self.loaded_production_unit.get_state(), ProductionUnit.STARTED)
 
-    def test_technical_machine(self):
+    def test_add_skill_constraint_to_operation(self):
         spec = Specification()
         spec.add(MaterialInputConstraint(Material(type="iron", quantity=1)))
 
@@ -126,12 +124,6 @@ class ProductionUnitTest(unittest.TestCase):
 	LoadOperation(Material("water", 1), self.four_a_pain).perform(self.worker)
 	ProduceOperation(self.four_a_pain).perform(self.worker, during=5)
         self.assertRaises(CannotProduce, ProduceOperation(self.four_a_pain).perform, self.worker, during=5)
-
-
-    def test_produce_right_output(self):
-	LoadOperation(Material("water", 1), self.four_a_pain).perform(self.worker)
-	ProduceOperation(self.four_a_pain).perform(self.worker, during=5)
-        self.assertEquals(self.four_a_pain.get_outputs()[0].type, "bread")
 
     def test_production_unit_with_stocking_area(self):
         stock_zone = StockingZone()
