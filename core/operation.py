@@ -36,19 +36,20 @@ class Operation(object):
 
     def check_all(self, worker):
         self.check_valid_state()
-        self.check_constraints()
+        self.check_constraints(worker)
         if hasattr(self, "static_constraints"):
             self.check_static_constraints(worker)
         if hasattr(self, "check"):
             self.check(worker)
 
     def check_valid_state(self):
+        print self.production_unit, self
         if not self.production_unit.get_state() in self.valid_state:
             raise IllegalStateToPerformAction("Action %s cannot be perform while in state %s" % (self, self.production_unit.state))
 
-    def check_constraints(self):
+    def check_constraints(self, worker):
         for constraint in self.constraints:
-            if not constraint.validate(self.production_unit):
+            if not constraint.validate(worker):
                 raise CannotPerformOperation(constraint.get_message())
 
     def check_static_constraints(self, worker):
@@ -132,9 +133,7 @@ class StartOperation(Operation):
 class ProduceOperation(Operation):
     valid_state = [ProductionUnit.STARTED, ProductionUnit.PRODUCING]
 
-    def __init__(self, production_time=None, *args, **kwargs):
-        self.production_time = production_time
-        self.infinite_production_time = self.production_time is None
+    def __init__(self, *args, **kwargs):
         self.progress = 0
         super(ProduceOperation, self).__init__(*args, **kwargs)
 
@@ -161,9 +160,8 @@ class ProduceOperation(Operation):
 
 class StopOperation(Operation):
     valid_state = [ProductionUnit.STARTED]
-    def check(self):pass
 
-    def perform(self, worker):
+    def do_step(self, worker):
         self.production_unit.set_state(ProductionUnitIDLEState)
 
 class Process(object):
