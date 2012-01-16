@@ -1,5 +1,7 @@
 import logging
 
+from core.entity import Entity
+
 logger = logging.getLogger()
 
 class NoWorkerToPerformAction(Exception): pass
@@ -21,11 +23,26 @@ class CannotPerformOperation(Event): pass
 
 class StockIsFull(Event):pass
 
-class ProductionUnit(object):
+
+class SignalDescriptor(object):
+    def __init__(self, initval=None, name='var'):
+        self.val = initval
+        self.name = name
+
+    def __get__(self, obj, objtype):
+        return self.val
+
+    def __set__(self, obj, val):
+        print 'SIGNALS'
+        self.val = val
+	
+
+class ProductionUnit(Entity):
     IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
+    state = SignalDescriptor(None)
 
     def __init__(self, spec, config={}):
-        self.worker = None
+	super(ProductionUnit, self).__init__()
         self.inputs = []
         self.outputs = []
         self.stocking_zone = None
@@ -41,11 +58,7 @@ class ProductionUnit(object):
     def get_state(self):
         return self.state.get_state()
 
-    def affect(self, worker):
-        self.worker = worker
-
     def set_state(self, state_class):
-#        print "Change state to %s" % state_class
         self.state = state_class(self)
 
     def get_outputs(self):
@@ -53,11 +66,6 @@ class ProductionUnit(object):
 
     def add_event(self, event):
         event.react(self)
-
-#    def perform_operation(self, operation, during=1):
-#        operation.production_unit = self
-#        operation.check_all()
-#        operation.perform()
 
     def set_output(self, outputs):
         self.outputs = outputs

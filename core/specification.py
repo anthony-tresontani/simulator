@@ -63,8 +63,7 @@ class SkillConstraint(InputConstraint):
     def __init__(self, skill_name):
         self.skill_name = skill_name
 
-    def validate(self, production_unit):
-        worker = production_unit.worker
+    def validate(self, worker):
         if not worker:
             return False
         return self.skill_name in worker.skills
