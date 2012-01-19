@@ -16,7 +16,6 @@ class TestScenario(TestCase):
         self.stock_zone = StockingZone(size=40)
         self.machine.add_stocking_zone(self.stock_zone)
         self.worker = Worker()
-        self.machine.affect(self.worker)
         StartOperation(production_unit=self.machine, time_to_perform=1).perform(self.worker, during=1)
 
     def test_process_step_by_step(self):
@@ -39,12 +38,12 @@ class TestScenario(TestCase):
         # load then produce then load, etc
         # 1 minute to load, 1 minute to produce 1, sequentially
         # leading to 30 produce in one hour
-        load_op = LoadOperation(Material(type="input", quantity=1), time_to_perform=1)
+        load_op = LoadOperation(Material(type="input", quantity=1), time_to_perform=1, production_unit=self.machine)
         product_op = ProduceOperation(production_unit=self.machine)
 
         operation_list = [load_op, product_op]
         process = Process(self.machine, operation_list)
-        process.run(self.worker, 60)
+        process.perform(self.worker, 60)
 
         self.assertEquals(self.stock_zone.count(), 30)
 
@@ -57,7 +56,7 @@ class TestScenario(TestCase):
 
         operation_list = [load_op, product_op]
         process = Process(self.machine, operation_list)
-        process.run(self.worker, 60)
+        process.perform(self.worker, 60)
 
         self.assertEquals(self.stock_zone.count(), 40)
 

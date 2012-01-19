@@ -39,7 +39,7 @@ class SignalDescriptor(object):
 
 class ProductionUnit(Entity):
     IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
-    state = SignalDescriptor(None)
+    _state = SignalDescriptor(None)
 
     def __init__(self, spec, config={}):
 	super(ProductionUnit, self).__init__()
