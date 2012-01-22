@@ -1,0 +1,5 @@
+- move Produce check to a specific function
+- create a config format
+- generate report
+- multiple worker
+- add worker to the constructor

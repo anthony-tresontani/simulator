@@ -83,12 +83,6 @@ class LoadOperation(Operation):
         self.inputs = inputs
         super(LoadOperation, self).__init__(*args, **kwargs)
 
-    def check(self, worker=None):
-        if not worker:
-            raise NoWorkerToPerformAction()
-        if not self.production_unit.spec.validate_any(self.inputs):
-            raise InvalidInputLoaded()
-
     def _do_step(self, worker):
         input = copy.copy(self.inputs)
         input.quantity = self.inputs.quantity / self.time_to_perform
@@ -97,16 +91,11 @@ class LoadOperation(Operation):
 
 class AllInOneLoadOperation(Operation):
     valid_state = [ProductionUnit.IDLE, ProductionUnit.STARTED]
+    static_constraints = [HasWorkerConstraint, InputValidForSpecConstraint]
 
     def __init__(self, inputs, *args, **kwargs):
         self.inputs = inputs
         super(AllInOneLoadOperation, self).__init__(*args, **kwargs)
-
-    def check(self, worker=None):
-        if not worker:
-            raise NoWorkerToPerformAction()
-        if not self.production_unit.spec.validate_any(self.inputs):
-            raise InvalidInputLoaded()
 
     def on_operation_complete(self):
         input = copy.copy(self.inputs)
