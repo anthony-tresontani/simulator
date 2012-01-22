@@ -61,6 +61,9 @@ class Operation(object):
         if self.is_operation_complete():
             self.on_operation_complete()
 
+        if self.worker:
+            self.worker.add_unit_of_work()
+
     def on_operation_complete(self):
         pass
 

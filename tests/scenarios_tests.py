@@ -1,20 +1,18 @@
-from unittest.case import TestCase
+from unittest.case import TestCase, SkipTest
+from core.event import Event
+from core.factory import Factory
 
 from core.material import Material
 from core.operation import StartOperation, LoadOperation, ProduceOperation, Process, UnloadOperation, ParallelProcess
-from core.production_unit import ProductionUnit, CannotProduce, StockingZone
+from core.production_unit import ProductionUnit, StockingZone
 from core.specification import Specification, MaterialInputConstraint
 from core.worker import Worker
+from tests.utils import create_machine
 
 class TestScenario(TestCase):
 
     def setUp(self):
-        spec = Specification()
-        spec.add(MaterialInputConstraint(Material(type="input", quantity=1)))
-        spec.add_output_material(Material(type="transformed", quantity=1))
-        self.machine = ProductionUnit(spec)
-        self.stock_zone = StockingZone(size=40)
-        self.machine.add_stocking_zone(self.stock_zone)
+        self.machine, spec, self.stock_zone = create_machine(material_type_input="wood", material_type_output="plank")
         self.worker = Worker()
         StartOperation(production_unit=self.machine, time_to_perform=1, worker=self.worker).perform(during=1)
 
@@ -22,7 +20,7 @@ class TestScenario(TestCase):
         # load then produce then load, etc
         # 1 minute to load, 1 minute to produce 1, sequentially
         # leading to 30 produce in one hour
-        load_op = LoadOperation(Material(type="input", quantity=1), time_to_perform=1, production_unit=self.machine, worker=self.worker)
+        load_op = LoadOperation(Material(type="wood", quantity=1), time_to_perform=1, production_unit=self.machine, worker=self.worker)
         product_op = ProduceOperation(production_unit=self.machine, worker=self.worker)
 
         operation_list = [load_op, product_op]
@@ -38,7 +36,7 @@ class TestScenario(TestCase):
         # load then produce then load, etc
         # 1 minute to load, 1 minute to produce 1, sequentially
         # leading to 30 produce in one hour
-        load_op = LoadOperation(Material(type="input", quantity=1), production_unit=self.machine, worker=self.worker)
+        load_op = LoadOperation(Material(type="wood", quantity=1), production_unit=self.machine, worker=self.worker)
         product_op = ProduceOperation(production_unit=self.machine, worker=self.worker)
 
         operation_list = [load_op, product_op]
@@ -51,7 +49,7 @@ class TestScenario(TestCase):
         # load then produce then load, etc
         # 1 minute to load 2, 2 minutes to produce 2, sequentially
         # leading to 40 produce in one hour
-        load_op = LoadOperation(Material(type="input", quantity=2), time_to_perform=1, production_unit=self.machine, worker=self.worker)
+        load_op = LoadOperation(Material(type="wood", quantity=2), time_to_perform=1, production_unit=self.machine, worker=self.worker)
         product_op = ProduceOperation(production_unit=self.machine)
 
         operation_list = [load_op, product_op]
@@ -62,7 +60,7 @@ class TestScenario(TestCase):
 
     def test_hour_of_production_with_unloading(self):
         # Load for 1 minute, produce for 1 minute, unload for 1 minute
-        load_op = LoadOperation(Material(type="input", quantity=1), time_to_perform=1, production_unit=self.machine, worker=self.worker)
+        load_op = LoadOperation(Material(type="wood", quantity=1), time_to_perform=1, production_unit=self.machine, worker=self.worker)
 
         secondary_area = StockingZone()
         unload_op = UnloadOperation(quantity=1, zone=secondary_area, time_to_perform=1, production_unit=self.machine, worker=self.worker)
@@ -75,7 +73,7 @@ class TestScenario(TestCase):
         self.assertEquals(secondary_area.count(), 60)
 
     def test_parallel_process(self):
-        load_op = LoadOperation(Material(type="input", quantity=1), production_unit=self.machine, worker=self.worker)
+        load_op = LoadOperation(Material(type="wood", quantity=1), production_unit=self.machine, worker=self.worker)
 
         secondary_area = StockingZone()
         unload_op = UnloadOperation(quantity=10, zone=secondary_area, production_unit=self.machine, worker=self.worker)
@@ -96,3 +94,21 @@ class TestScenario(TestCase):
 
         main_process.perform(56)
         self.assertEquals(secondary_area.count(), 30)
+
+    def test_chained_production_in_sequence(self):
+        # Machine A -> Machine B
+        machine_b, spec, stock_zone = create_machine(material_type_input="plank", material_type_output="furniture")
+        StartOperation(production_unit=machine_b, time_to_perform=1, worker=self.worker).perform(during=1)
+        
+    def test_working_hour(self):
+        eight_hour_worker = Worker(working_hour = 8 * 60)
+        self.assertRaises(Event, LoadOperation(Material(type="wood", quantity=1), production_unit=self.machine, worker=eight_hour_worker).perform, during=8*60 + 1)
+
+        factory = Factory()
+        factory.add_worker(Worker(working_hour = 8 * 60))
+        factory.add_worker(Worker(working_hour = 8 * 60))
+        factory.add_worker(Worker(working_hour = 8 * 60))
+
+        factory.add_production_unit(self.machine)
+        raise SkipTest("Not implemented completely")
+        factory.perform(24 * 60)

@@ -8,14 +8,12 @@ from core.material import Material
 from core.worker import Worker
 from core.specification import Specification, MaterialInputConstraint, SkillConstraint
 from core.event import Failure, Fix
+from tests.utils import create_machine
 
 
 class ProductionUnitTest(unittest.TestCase):
     def setUp(self):
-        spec = Specification()
-        spec.add(MaterialInputConstraint(Material(type="yarn", quantity=1)))
-        spec.add_output_material(Material("whatever", 1))
-        self.unaffected_production_unit = ProductionUnit(spec)
+        self.unaffected_production_unit, spec, zone = create_machine(material_type_input="yarn")
 
         self.worker = Worker()
         self.affected_production_unit = ProductionUnit(spec)
@@ -62,16 +60,10 @@ class ProductionUnitTest(unittest.TestCase):
         ProduceOperation(self.loaded_production_unit, worker=self.worker).perform()
         self.assertEquals(self.loaded_production_unit.get_state(), ProductionUnit.PRODUCING)
         self.assertEquals(len(self.loaded_production_unit.get_outputs()), 1)
-        self.assertEquals(self.loaded_production_unit.get_outputs()[0].type, "whatever")
+        self.assertEquals(self.loaded_production_unit.get_outputs()[0].type, "output")
 
     def test_slower_machine_configuration(self):
-        config = {'rate_by_minute': 0.5,
-                  "input_types": [("yarn", 1)], }
-        spec = Specification()
-        spec.add(MaterialInputConstraint(Material(type="yarn", quantity=1)))
-        spec.add_output_material(Material("twisted yarn", 1))
-
-        slower_gp = ProductionUnit(spec, config)
+        slower_gp, spec, zone = create_machine(material_type_input="yarn", rate=0.5)
 
         LoadOperation(self.inputs, slower_gp, worker=self.worker).perform()
 
@@ -99,21 +91,16 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertEquals(self.loaded_production_unit.get_state(), ProductionUnit.STARTED)
 
     def test_add_skill_constraint_to_operation(self):
-        spec = Specification()
-        spec.add(MaterialInputConstraint(Material(type="iron", quantity=1)))
-
-        tech_production_unit = ProductionUnit(spec)
+        tech_production_unit, spec, zone = create_machine(material_type_input="iron")
 
         start_op = StartOperation(tech_production_unit, worker=self.worker)
         start_op.add_constraint(SkillConstraint(skill_name="blacksmith"))
-
-        worker = Worker()
 
         self.assertRaises(CannotPerformOperation, start_op.perform)
 
         blacksmith = Worker()
         blacksmith.skills.append("blacksmith")
-        start_op = StartOperation(tech_production_unit, worker=blacksmith).perform()
+        StartOperation(tech_production_unit, worker=blacksmith).perform()
         self.assertEquals(tech_production_unit.get_state(), ProductionUnit.STARTED)
 
     def test_produce_consume_inputs(self):
