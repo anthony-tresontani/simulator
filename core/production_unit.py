@@ -11,7 +11,8 @@ class NoWorkerToPerformAction(Exception): pass
 class IllegalStateToPerformAction(Exception): pass
 
 
-class Event(Exception):pass
+class Event(Exception): pass
+
 
 class CannotProduce(Event): pass
 
@@ -22,28 +23,32 @@ class InvalidInputLoaded(Event): pass
 class CannotPerformOperation(Event): pass
 
 
-class StockIsFull(Event):pass
+class StockIsFull(Event): pass
 
 
 class SignalDescriptor(object):
-    def __init__(self, initval=None, name='var'):
-        self.val = initval
+
+    def __init__(self, name):
         self.name = name
 
-    def __get__(self, obj, objtype):
-        return self.val
+    def __get__(self, instance, owner):
+        return instance._value
 
-    def __set__(self, obj, val):
-        print 'SIGNALS'
-        self.val = val
-	
+    def __set__(self, instance, value):
+        if hasattr(instance, self.name):
+            print "Was %s" % getattr(instance, self.name)
+        instance._value = value
+        print "Is %s" % instance._value
+
+    def __delete__(self, instance):
+        del(instance._value)
 
 class ProductionUnit(Entity):
     IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
-    _state = SignalDescriptor(None)
+    state = SignalDescriptor("state")
 
     def __init__(self, spec, config={}):
-	super(ProductionUnit, self).__init__()
+        super(ProductionUnit, self).__init__()
         self.inputs = []
         self.outputs = []
         self.stocking_zone = None
@@ -60,7 +65,7 @@ class ProductionUnit(Entity):
         return self.state.get_state()
 
     def set_state(self, state_class):
-        self.state = state_class(self)
+        self.state = state_class    (self)
 
     def get_outputs(self):
         return self.outputs
@@ -103,9 +108,10 @@ class ProductionUnitPRODUCINGState(ProductionUnitState):
 class ProductionUnitFAILUREState(ProductionUnitState):
     STATUS = ProductionUnit.FAILURE
 
+
 class StockingZone():
     def __init__(self, size=None):
-        self.stock = {} 
+        self.stock = {}
         self.size = size # None means unlimited
 
     def count(self):
@@ -120,9 +126,9 @@ class StockingZone():
             if not element.quantity:
                 logger.warning("Try to add empty element of type %s" % element.type)
             if element.type not in self.stock:
-                 self.stock[element.type] = element
+                self.stock[element.type] = element
             else:
-                 self.stock[element.type] += element
+                self.stock[element.type] += element
         logger.debug("Add elements to the stock. Stock(%d/%s)", self.count(), self.size if self.size else "unlimited")
 
     def add_zone(self, zone):

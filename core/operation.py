@@ -1,28 +1,12 @@
 import copy
 import logging
+from core.constraint import HasWorkerConstraint, InputValidForSpecConstraint
 
 from core.production_unit import IllegalStateToPerformAction, ProductionUnit, NoWorkerToPerformAction,\
     InvalidInputLoaded, CannotPerformOperation, ProductionUnitSTARTEDState, ProductionUnitIDLEState,\
     CannotProduce, ProductionUnitPRODUCINGState
 
 logger = logging.getLogger()
-
-
-class OperationalConstraint(object):
-    def __init__(self, operation):
-        self.operation = operation
-
-
-class HasWorkerConstraint(OperationalConstraint):
-    def validate(self, worker=None):
-        if not worker:
-            raise NoWorkerToPerformAction()
-
-
-class InputValidForSpecConstraint(OperationalConstraint):
-    def validate(self, worker=None):
-        if not self.operation.production_unit.spec.validate_any(self.operation.inputs):
-            raise InvalidInputLoaded()
 
 
 class Operation(object):
@@ -204,10 +188,13 @@ class Process(Operation):
         logger.debug("Process: Current operation: %s" % self.current)
         self.current.do_step(worker)
         if self.current.is_operation_complete():
-            if not self.queue:
-                self.queue.extend(self.operations[:])
             self.current = self.queue.pop(0)
 
+    def is_operation_complete(self):
+        return not bool(self.queue)
+
+    def on_operation_complete(self):
+        self.queue.extend(self.operations[:])
 
 class ParallelProcess(Operation):
     def __init__(self, process_list):
