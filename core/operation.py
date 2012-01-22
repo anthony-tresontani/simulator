@@ -10,51 +10,52 @@ logger = logging.getLogger()
 
 
 class Operation(object):
-    def __init__(self, production_unit=None, time_to_perform=1):
+    def __init__(self, production_unit=None, time_to_perform=1, worker=None):
         self.production_unit = production_unit
         self.constraints = []
         self.time_to_perform = time_to_perform
         self.elapsed_time = 0
         self.progress = 0.0
+        self.worker = worker
 
     def add_constraint(self, constraint):
         self.constraints.append(constraint)
 
-    def check_all(self, worker):
+    def check_all(self):
         self.check_valid_state()
         if hasattr(self, "constraints"):
-            self.check_constraints(worker)
+            self.check_constraints()
         if hasattr(self, "static_constraints"):
-            self.check_static_constraints(worker)
+            self.check_static_constraints()
         if hasattr(self, "check"):
-            self.check(worker)
+            self.check()
 
     def check_valid_state(self):
         if hasattr(self, "valid_state") and not self.production_unit.get_state() in self.valid_state:
             raise IllegalStateToPerformAction(
                 "Action %s cannot be perform while in state %s" % (self, self.production_unit.state))
 
-    def check_constraints(self, worker):
+    def check_constraints(self):
         for constraint in self.constraints:
-            if not constraint.validate(worker):
+            if not constraint.validate(self.worker):
                 raise CannotPerformOperation(constraint.get_message())
 
-    def check_static_constraints(self, worker):
+    def check_static_constraints(self):
         for constraint in self.static_constraints:
-            constraint(self).validate(worker)
+            constraint(self).validate(self.worker)
 
-    def perform(self, worker, during=1):
-        self.check_all(worker)
+    def perform(self, during=1):
+        self.check_all()
         for i in range(during):
             logger.debug("###TIME### - %d" % i)
-            self.do_step(worker)
+            self.do_step()
 
-    def do_step(self, worker):
+    def do_step(self):
         if self.is_operation_complete():
             self.progress = 0
 
         if self.operation_ready_to_be_performed():
-            self._do_step(worker)
+            self._do_step()
             self.progress += self.get_progress_step()
 
         if self.is_operation_complete():
@@ -72,7 +73,7 @@ class Operation(object):
     def is_operation_complete(self):
         return self.progress == 1
 
-    def _do_step(self, worker):
+    def _do_step(self):
         pass
 
 class LoadOperation(Operation):
@@ -83,7 +84,7 @@ class LoadOperation(Operation):
         self.inputs = inputs
         super(LoadOperation, self).__init__(*args, **kwargs)
 
-    def _do_step(self, worker):
+    def _do_step(self):
         input = copy.copy(self.inputs)
         input.quantity = self.inputs.quantity / self.time_to_perform
         self.production_unit.inputs.append(input)
@@ -110,7 +111,7 @@ class UnloadOperation(Operation):
         self.zone = zone
         super(UnloadOperation, self).__init__(*args, **kwargs)
 
-    def _do_step(self, worker):
+    def _do_step(self):
         self.done = self.quantity * self.progress
         self.zone.add_to_stock(self.production_unit.stocking_zone.stock.popitem()[1])
 
@@ -130,7 +131,7 @@ class ProduceOperation(Operation):
     def get_progress_step(self):
         return self.production_unit.rate
 
-    def _do_step(self, worker):
+    def _do_step(self):
         if not self.progress:
             self.progress += self.get_progress_step()
         if not self.production_unit.get_state() == ProductionUnit.PRODUCING:
@@ -162,7 +163,7 @@ class ProduceOperation(Operation):
 class StopOperation(Operation):
     valid_state = [ProductionUnit.STARTED]
 
-    def _do_step(self, worker):
+    def _do_step(self):
         self.production_unit.set_state(ProductionUnitIDLEState)
 
 
@@ -173,9 +174,9 @@ class Process(Operation):
         self.queue = self.operations[:]
         self.current = self.queue.pop(0)
 
-    def _do_step(self, worker):
+    def _do_step(self):
         logger.debug("Process: Current operation: %s" % self.current)
-        self.current.do_step(worker)
+        self.current.do_step()
         if self.current.is_operation_complete():
             self.current = self.queue.pop(0)
 
@@ -190,7 +191,7 @@ class ParallelProcess(Operation):
         super(ParallelProcess, self).__init__(      )
         self.processes = process_list
 
-    def _do_step(self, worker):
+    def _do_step(self):
         for process in self.processes:
             logger.debug("Running parallel process %s" % process)
-            process.do_step(worker)
+            process.do_step()
