@@ -43,7 +43,8 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertEquals(self.unaffected_production_unit.get_state(), ProductionUnit.IDLE)
 
     def test_cannot_start_without_worker(self):
-        self.assertRaises(NoWorkerToPerformAction, LoadOperation(self.inputs, self.unaffected_production_unit).perform, None)
+        self.assertRaises(NoWorkerToPerformAction, LoadOperation(self.inputs, self.unaffected_production_unit).perform,
+            None)
 
     def test_start_state(self):
         self.assertEquals(self.started_production_unit.get_state(), ProductionUnit.STARTED)
@@ -53,16 +54,18 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertEquals(self.started_production_unit.get_state(), ProductionUnit.IDLE)
 
     def test_illegal_state(self):
-        self.assertRaises(IllegalStateToPerformAction, StopOperation(self.unaffected_production_unit).perform, self.worker)
+        self.assertRaises(IllegalStateToPerformAction, StopOperation(self.unaffected_production_unit).perform,
+            self.worker)
 
     def test_produce_without_input(self):
-        self.assertRaises(CannotProduce, ProduceOperation(production_unit=self.started_production_unit).perform, self.worker, during=1)
+        self.assertRaises(CannotProduce, ProduceOperation(production_unit=self.started_production_unit).perform,
+            self.worker, during=1)
 
     def test_produce_operation(self):
-	ProduceOperation(self.loaded_production_unit).perform(self.worker)
+        ProduceOperation(self.loaded_production_unit).perform(self.worker)
         self.assertEquals(self.loaded_production_unit.get_state(), ProductionUnit.PRODUCING)
-	self.assertEquals(len(self.loaded_production_unit.get_outputs()), 1)
-	self.assertEquals(self.loaded_production_unit.get_outputs()[0].type, "whatever")
+        self.assertEquals(len(self.loaded_production_unit.get_outputs()), 1)
+        self.assertEquals(self.loaded_production_unit.get_outputs()[0].type, "whatever")
 
     def test_slower_machine_configuration(self):
         config = {'rate_by_minute': 0.5,
@@ -81,7 +84,8 @@ class ProductionUnitTest(unittest.TestCase):
 
     def test_invalid_input(self):
         input = Material("rocks")
-        self.assertRaises(InvalidInputLoaded, LoadOperation(input, production_unit=self.affected_production_unit).perform, self.worker)
+        self.assertRaises(InvalidInputLoaded,
+            LoadOperation(input, production_unit=self.affected_production_unit).perform, self.worker)
 
     def test_out_of_stock(self):
         self.assertRaises(CannotProduce, ProduceOperation(self.loaded_production_unit).perform, self.worker, during=3)
@@ -90,7 +94,7 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertRaises(CannotProduce, ProduceOperation(self.four_a_pain).perform, self.worker, during=5)
 
     def test_complete_failure(self):
-	ProduceOperation(production_unit=self.loaded_production_unit).perform(self.worker)
+        ProduceOperation(production_unit=self.loaded_production_unit).perform(self.worker)
         self.loaded_production_unit.add_event(Failure())
         self.assertEquals(self.loaded_production_unit.get_state(), ProductionUnit.FAILURE)
 
@@ -110,21 +114,21 @@ class ProductionUnitTest(unittest.TestCase):
 
         self.assertRaises(CannotPerformOperation, start_op.perform, worker)
 
-	blacksmith = Worker()
+        blacksmith = Worker()
         blacksmith.skills.append("blacksmith")
         start_op.perform(blacksmith)
         self.assertEquals(tech_production_unit.get_state(), ProductionUnit.STARTED)
 
     def test_produce_consume_inputs(self):
-	LoadOperation(Material("water", 1), self.four_a_pain).perform(self.worker)
-	ProduceOperation(self.four_a_pain).perform(self.worker, during=5)
+        LoadOperation(Material("water", 1), self.four_a_pain).perform(self.worker)
+        ProduceOperation(self.four_a_pain).perform(self.worker, during=5)
         self.assertRaises(CannotProduce, ProduceOperation(self.four_a_pain).perform, self.worker, during=5)
 
     def test_production_unit_with_stocking_area(self):
         stock_zone = StockingZone()
         self.loaded_production_unit.add_stocking_zone(stock_zone)
 
-	ProduceOperation(self.loaded_production_unit).perform(self.worker)
+        ProduceOperation(self.loaded_production_unit).perform(self.worker)
 
         self.assertEquals(stock_zone.count(), 1)
 
@@ -132,10 +136,19 @@ class ProductionUnitTest(unittest.TestCase):
         stock_zone = StockingZone(size=3)
         self.loaded_production_unit.add_stocking_zone(stock_zone)
 
-	LoadOperation(Material("yarn", 10), self.loaded_production_unit).perform(self.worker)
+        LoadOperation(Material("yarn", 10), self.loaded_production_unit).perform(self.worker)
         try:
-	    ProduceOperation(self.loaded_production_unit).perform(self.worker, during=5)
+            ProduceOperation(self.loaded_production_unit).perform(self.worker, during=5)
         except Event:
             pass
 
         self.assertEquals(stock_zone.count(), 3)
+
+class TestStock(unittest.TestCase):
+
+    def test_count(self):
+        stock_zone = StockingZone()
+        stock_zone.add_to_stock(Material("something", 2))
+        stock_zone.add_to_stock(Material("something", 1))
+        stock_zone.add_to_stock(Material("other", 4))
+        self.assertEquals(stock_zone.count(), 7)

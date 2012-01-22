@@ -11,6 +11,11 @@ class Material(object):
     def __repr__(self):
         return self.__str__()
 
+    def __add__(self, material):
+        if material.type == self.type:
+	    return Material(self.type, self.quantity + material.quantity)
+        return self, material
+
     def consume(self, spec):
         for constraint in spec.constraints:
             if isinstance(constraint, MaterialInputConstraint) and constraint.material.type==self.type:

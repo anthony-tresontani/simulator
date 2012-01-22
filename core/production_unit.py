@@ -1,3 +1,4 @@
+import collections
 import logging
 
 from core.entity import Entity
@@ -103,19 +104,26 @@ class ProductionUnitFAILUREState(ProductionUnitState):
     STATUS = ProductionUnit.FAILURE
 
 class StockingZone():
-
     def __init__(self, size=None):
-        self.stock = []
+        self.stock = {} 
         self.size = size # None means unlimited
 
     def count(self):
-        return len(self.stock)
+        return sum([material.quantity for material in self.stock.values()])
 
     def add_to_stock(self, elements):
-        logger.debug("Add a element to the stock. Stock(%d/%s)", self.count(), self.size if self.size else "unlimited")
         if self.size and self.count() >= self.size:
             raise StockIsFull()
-        self.stock.append(elements)
+        if not isinstance(elements, collections.Iterable):
+            elements = [elements]
+        for element in elements:
+            if not element.quantity:
+                logger.warning("Try to add empty element of type %s" % element.type)
+            if element.type not in self.stock:
+                 self.stock[element.type] = element
+            else:
+                 self.stock[element.type] += element
+        logger.debug("Add elements to the stock. Stock(%d/%s)", self.count(), self.size if self.size else "unlimited")
 
     def add_zone(self, zone):
         pass
