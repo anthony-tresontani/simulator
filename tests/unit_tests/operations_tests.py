@@ -19,19 +19,19 @@ class TestOperation(TestCase):
         load_op = LoadOperation(self.input, production_unit=self.machine, time_to_perform=3, worker=self.worker)
 
         load_op.perform(during=1)
-        self.assertEquals(len(self.machine.inputs), 1)
+        self.assertEquals(self.machine.inputs.count(), 1)
 
         load_op.perform(during=2)
-        self.assertEquals(len(self.machine.inputs), 3)
+        self.assertEquals(self.machine.inputs.count(), 3)
 
     def test_load_all_in_one_operation(self):
         load_op = AllInOneLoadOperation(self.input, production_unit=self.machine, time_to_perform=3, worker=self.worker)
 
         load_op.perform(during=1)
-        self.assertEquals(len(self.machine.inputs), 0)
+        self.assertEquals(self.machine.inputs.count(), 0)
 
         load_op.perform(during=2)
-        self.assertEquals(len(self.machine.inputs), 1)
+        self.assertEquals(self.machine.inputs.count(), 3)
 
     def test_produce_operation(self):
         StartOperation(production_unit=self.machine,worker=self.worker).perform(during=1)

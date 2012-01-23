@@ -49,7 +49,6 @@ class ProductionUnit(Entity):
 
     def __init__(self, spec, config={}, input_stocking_zone=None, output_stocking_zone=None):
         super(ProductionUnit, self).__init__()
-        self.inputs = []
         self.inputs_stocking_zone = input_stocking_zone or StockingZone()
         self.outputs = []
         self.output_stocking_zone = output_stocking_zone or StockingZone()
@@ -62,6 +61,10 @@ class ProductionUnit(Entity):
         self.rate = self.config.get("rate_by_minute", 1)
         self.input_types = self.config.get("input_types", None)
 
+    @property
+    def inputs(self):
+        return self.inputs_stocking_zone
+
     def get_state(self):
         return self.state.get_state()
 
@@ -69,7 +72,7 @@ class ProductionUnit(Entity):
         self.state = state_class(self)
 
     def load(self, input):
-        self.inputs.append(input)
+        self.inputs_stocking_zone.add_to_stock(input)
 
     def produce(self):
         for input in self.inputs_stocking_zone:
@@ -151,5 +154,14 @@ class StockingZone():
     def add_zone(self, zone):
         pass
 
+    def remove(self, element):
+        if self.stock[element.type].quantity > element.quantity:
+            self.stock[element.type] -= element.quantity
+        else:
+            del self.stock[element.type]
+
     def __iter__(self):
         return self.stock.values().__iter__()
+
+    def get_flat_inputs(self):
+        return self.stock.values()

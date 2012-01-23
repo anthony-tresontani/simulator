@@ -143,7 +143,7 @@ class ProduceOperation(Operation):
         if not self.production_unit.get_state() == ProductionUnit.PRODUCING:
             self.production_unit.set_state(ProductionUnitPRODUCINGState)
 
-        inputs = self.production_unit.inputs
+        inputs = self.production_unit.inputs.get_flat_inputs()
         spec = self.production_unit.spec
         if not spec.validate_all(inputs):
             self.production_unit.set_state(ProductionUnitSTARTEDState)
@@ -156,7 +156,7 @@ class ProduceOperation(Operation):
         logger.debug("Produce has completed a product")
 
     def is_operation_complete(self):
-        return not bool(self.production_unit.inputs)
+        return not bool(self.production_unit.inputs_stocking_zone.count())
 
 
 class Process(Operation):

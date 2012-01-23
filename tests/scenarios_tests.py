@@ -1,3 +1,4 @@
+from pdb import set_trace
 from unittest.case import TestCase, SkipTest
 from core.event import Event
 from core.factory import Factory
@@ -98,7 +99,7 @@ class TestScenario(TestCase):
     def test_chained_production_in_sequence(self):
         # Machine A -> Machine B
         machine_b, spec, stock_zone = create_machine(material_type_input="plank", material_type_output="furniture")
-        machine_b.input_stocking_zone = self.machine.output_stocking_zone
+        machine_b.inputs_stocking_zone = self.machine.output_stocking_zone
         StartOperation(production_unit=machine_b, time_to_perform=1, worker=self.worker).perform(during=1)
         LoadOperation(Material(type="wood", quantity=1), production_unit=self.machine, worker=self.worker).perform()
         ProduceOperation(production_unit=self.machine, worker=self.worker).perform()
