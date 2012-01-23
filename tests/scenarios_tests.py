@@ -1,6 +1,6 @@
 from pdb import set_trace
 from unittest.case import TestCase, SkipTest
-from core.event import Event
+from core.event import Event, EventManager
 from core.factory import Factory
 
 from core.material import Material
@@ -107,14 +107,14 @@ class TestScenario(TestCase):
         self.assertEquals(len(machine_b.get_outputs()), 1)
 
     def test_working_hour(self):
+        factory = Factory()
+        ev = EventManager(factory)
         eight_hour_worker = Worker(working_hour = 8 * 60)
         self.assertRaises(Event, LoadOperation(Material(type="wood", quantity=1), production_unit=self.machine, worker=eight_hour_worker).perform, during=8*60 + 1)
 
-        factory = Factory()
-        factory.add_worker(Worker(working_hour = 8 * 60))
-        factory.add_worker(Worker(working_hour = 8 * 60))
-        factory.add_worker(Worker(working_hour = 8 * 60))
+        ev.add_worker(Worker(working_hour = 8 * 60))
+        ev.add_worker(Worker(working_hour = 8 * 60))
+        ev.add_worker(Worker(working_hour = 8 * 60))
 
         factory.add_production_unit(self.machine)
-        raise SkipTest("Not implemented completely")
-        factory.perform(24 * 60)
+        factory.run(24 * 60)

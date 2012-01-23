@@ -1,13 +1,13 @@
 import unittest
 from core.operation import LoadOperation, StartOperation, StopOperation, ProduceOperation
 
-from core.production_unit import ProductionUnit, CannotPerformOperation, StockingZone, Event
-from core.production_unit import IllegalStateToPerformAction, InvalidInputLoaded, CannotProduce, NoWorkerToPerformAction
+from core.production_unit import ProductionUnit, CannotPerformOperation, StockingZone
+from core.production_unit import IllegalStateToPerformAction, InvalidInputLoaded, NoWorkerToPerformAction
 
 from core.material import Material
 from core.worker import Worker
 from core.specification import Specification, MaterialInputConstraint, SkillConstraint
-from core.event import Failure, Fix
+from core.event import Failure, Fix, Event
 from tests.utils import create_machine
 
 
@@ -54,7 +54,7 @@ class ProductionUnitTest(unittest.TestCase):
         self.assertRaises(IllegalStateToPerformAction, StopOperation(self.unaffected_production_unit, worker=self.worker).perform)
 
     def test_produce_without_input(self):
-        self.assertRaises(CannotProduce, ProduceOperation(production_unit=self.started_production_unit, worker=self.worker).perform, during=1)
+        self.assertRaises(InvalidInputLoaded, ProduceOperation(production_unit=self.started_production_unit, worker=self.worker).perform, during=1)
 
     def test_produce_operation(self):
         ProduceOperation(self.loaded_production_unit, worker=self.worker).perform()
@@ -77,10 +77,10 @@ class ProductionUnitTest(unittest.TestCase):
             LoadOperation(input, production_unit=self.affected_production_unit, worker=self.worker).perform)
 
     def test_out_of_stock(self):
-        self.assertRaises(CannotProduce, ProduceOperation(self.loaded_production_unit, worker=self.worker).perform, during=3)
+        self.assertRaises(InvalidInputLoaded, ProduceOperation(self.loaded_production_unit, worker=self.worker).perform, during=3)
 
     def test_multiple_inputs(self):
-        self.assertRaises(CannotProduce, ProduceOperation(self.four_a_pain,worker=self.worker).perform, during=5)
+        self.assertRaises(InvalidInputLoaded, ProduceOperation(self.four_a_pain,worker=self.worker).perform, during=5)
 
     def test_complete_failure(self):
         ProduceOperation(production_unit=self.loaded_production_unit, worker=self.worker).perform()
@@ -106,7 +106,7 @@ class ProductionUnitTest(unittest.TestCase):
     def test_produce_consume_inputs(self):
         LoadOperation(Material("water", 1), self.four_a_pain, worker=self.worker).perform()
         ProduceOperation(self.four_a_pain, worker=self.worker).perform(during=5)
-        self.assertRaises(CannotProduce, ProduceOperation(self.four_a_pain, worker=self.worker).perform, during=5)
+        self.assertRaises(InvalidInputLoaded, ProduceOperation(self.four_a_pain, worker=self.worker).perform, during=5)
 
     def test_production_unit_with_stocking_area(self):
         stock_zone = StockingZone()
