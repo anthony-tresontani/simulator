@@ -94,6 +94,12 @@ class ProductionUnit(Entity):
         else:
             self.stocking_zone = zone
 
+    def stop(self):
+        self.set_state(ProductionUnitIDLEState)
+
+    def start(self):
+        self.set_state(ProductionUnitSTARTEDState)
+
 
 class ProductionUnitState(object):
     def __init__(self, production_unit):

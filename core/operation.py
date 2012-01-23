@@ -1,5 +1,6 @@
 import copy
 import logging
+from types import MethodType
 from core.constraint import HasWorkerConstraint, InputValidForSpecConstraint
 
 from core.production_unit import IllegalStateToPerformAction, ProductionUnit, NoWorkerToPerformAction,\
@@ -121,11 +122,13 @@ class UnloadOperation(Operation):
     def operation_ready_to_be_performed(self):
         return bool(self.production_unit.stocking_zone.stock)
 
-class StartOperation(Operation):
-    valid_state = [ProductionUnit.IDLE]
+def create_operation(class_name, action, valid_states):
+    def _do_step(self):
+        getattr(self.production_unit, action)()
+    return type(class_name, (Operation,), {'_do_step': _do_step, "valid_state": valid_states})
 
-    def _do_step(self, *args, **kwargs):
-        self.production_unit.set_state(ProductionUnitSTARTEDState)
+StartOperation = create_operation("StartOperation","start", [ProductionUnit.IDLE])
+StopOperation = create_operation("StopOperation","stop", [ProductionUnit.STARTED])
 
 
 class ProduceOperation(Operation):
@@ -152,18 +155,8 @@ class ProduceOperation(Operation):
     def on_operation_complete(self):
         logger.debug("Produce has completed a product")
 
-    def get_elapsed_time(self):
-        return self.elapsed_time
-
     def is_operation_complete(self):
         return not bool(self.production_unit.inputs)
-
-
-class StopOperation(Operation):
-    valid_state = [ProductionUnit.STARTED]
-
-    def _do_step(self):
-        self.production_unit.set_state(ProductionUnitIDLEState)
 
 
 class Process(Operation):
