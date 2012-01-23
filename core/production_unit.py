@@ -65,7 +65,17 @@ class ProductionUnit(Entity):
         return self.state.get_state()
 
     def set_state(self, state_class):
-        self.state = state_class    (self)
+        self.state = state_class(self)
+
+    def load(self, input):
+        self.inputs.append(input)
+
+    def produce(self):
+        for input in self.inputs:
+            input.consume(self.spec)
+            if not input.quantity:
+                self.inputs.remove(input)
+        self.set_output(self.spec.output_materials)
 
     def get_outputs(self):
         return self.outputs

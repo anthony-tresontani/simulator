@@ -90,7 +90,7 @@ class LoadOperation(Operation):
     def _do_step(self):
         input = copy.copy(self.inputs)
         input.quantity = self.inputs.quantity / self.time_to_perform
-        self.production_unit.inputs.append(input)
+        self.production_unit.load(input)
 
 
 class AllInOneLoadOperation(Operation):
@@ -103,7 +103,7 @@ class AllInOneLoadOperation(Operation):
 
     def on_operation_complete(self):
         input = copy.copy(self.inputs)
-        self.production_unit.inputs.append(input)
+        self.production_unit.load(input)
 
 
 class UnloadOperation(Operation):
@@ -142,15 +142,11 @@ class ProduceOperation(Operation):
 
         inputs = self.production_unit.inputs
         spec = self.production_unit.spec
-        if not spec.validate_all(self.production_unit.inputs):
+        if not spec.validate_all(inputs):
             self.production_unit.set_state(ProductionUnitSTARTEDState)
             raise CannotProduce("Inputs %s does not match constraints %s" % (inputs, spec))
         if self.progress == 1:
-            for input in self.production_unit.inputs:
-                input.consume(spec)
-                if not input.quantity:
-                    self.production_unit.inputs.remove(input)
-            self.production_unit.set_output(self.production_unit.spec.output_materials)
+            self.production_unit.produce()
             self.progress = 0
 
     def on_operation_complete(self):

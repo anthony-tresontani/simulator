@@ -3,3 +3,4 @@
 - generate report
 - multiple worker
 - add a protocol to PU
+- On event manager (for each exception type)
