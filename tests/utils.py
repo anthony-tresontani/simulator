@@ -7,7 +7,6 @@ def create_machine(material_type_input="input", material_type_output="output", s
     config = {'rate_by_minute': rate}
     spec.add(MaterialInputConstraint(Material(type=material_type_input, quantity=1)))
     spec.add_output_material(Material(type=material_type_output, quantity=1))
-    machine = ProductionUnit(spec, config)
     stock_zone = StockingZone(size=stocking_zone_size)
-    machine.add_stocking_zone(stock_zone)
+    machine = ProductionUnit(spec, config, output_stocking_zone=stock_zone)
     return machine, spec, stock_zone

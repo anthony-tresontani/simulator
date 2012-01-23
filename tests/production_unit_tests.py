@@ -110,7 +110,7 @@ class ProductionUnitTest(unittest.TestCase):
 
     def test_production_unit_with_stocking_area(self):
         stock_zone = StockingZone()
-        self.loaded_production_unit.add_stocking_zone(stock_zone)
+        self.loaded_production_unit.output_stocking_zone = stock_zone
 
         ProduceOperation(self.loaded_production_unit, worker=self.worker).perform()
 
@@ -118,7 +118,7 @@ class ProductionUnitTest(unittest.TestCase):
 
     def test_production_unit_with_limited_stocking_area(self):
         stock_zone = StockingZone(size=3)
-        self.loaded_production_unit.add_stocking_zone(stock_zone)
+        self.loaded_production_unit.output_stocking_zone = stock_zone
 
         LoadOperation(Material("yarn", 10), self.loaded_production_unit, worker=self.worker).perform()
         try:

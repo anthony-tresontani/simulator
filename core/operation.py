@@ -117,10 +117,10 @@ class UnloadOperation(Operation):
 
     def _do_step(self):
         self.done = self.quantity * self.progress
-        self.zone.add_to_stock(self.production_unit.stocking_zone.stock.popitem()[1])
+        self.zone.add_to_stock(self.production_unit.output_stocking_zone.stock.popitem()[1])
 
     def operation_ready_to_be_performed(self):
-        return bool(self.production_unit.stocking_zone.stock)
+        return bool(self.production_unit.output_stocking_zone.stock)
 
 def create_operation(class_name, action, valid_states):
     def _do_step(self):

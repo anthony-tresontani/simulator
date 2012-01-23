@@ -47,11 +47,12 @@ class ProductionUnit(Entity):
     IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
     state = SignalDescriptor("state")
 
-    def __init__(self, spec, config={}):
+    def __init__(self, spec, config={}, input_stocking_zone=None, output_stocking_zone=None):
         super(ProductionUnit, self).__init__()
         self.inputs = []
+        self.inputs_stocking_zone = input_stocking_zone or StockingZone()
         self.outputs = []
-        self.stocking_zone = None
+        self.output_stocking_zone = output_stocking_zone or StockingZone()
         self.config = config
         self.spec = spec
         self.initialize()
@@ -71,7 +72,7 @@ class ProductionUnit(Entity):
         self.inputs.append(input)
 
     def produce(self):
-        for input in self.inputs:
+        for input in self.inputs_stocking_zone:
             input.consume(self.spec)
             if not input.quantity:
                 self.inputs.remove(input)
@@ -85,14 +86,14 @@ class ProductionUnit(Entity):
 
     def set_output(self, outputs):
         self.outputs = outputs
-        if self.stocking_zone:
-            self.stocking_zone.add_to_stock(outputs)
+        if self.output_stocking_zone:
+            self.output_stocking_zone.add_to_stock(outputs)
 
-    def add_stocking_zone(self, zone):
-        if self.stocking_zone:
-            self.stocking_zone.add_zone(self.stocking_zone)
+    def add_output_stocking_zone(self, zone):
+        if self.output_stocking_zone:
+            self.output_stocking_zone.add_zone(self.output_stocking_zone)
         else:
-            self.stocking_zone = zone
+            self.output_stocking_zone = zone
 
     def stop(self):
         self.set_state(ProductionUnitIDLEState)
@@ -149,3 +150,6 @@ class StockingZone():
 
     def add_zone(self, zone):
         pass
+
+    def __iter__(self):
+        return self.stock.values().__iter__()

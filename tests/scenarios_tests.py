@@ -98,8 +98,13 @@ class TestScenario(TestCase):
     def test_chained_production_in_sequence(self):
         # Machine A -> Machine B
         machine_b, spec, stock_zone = create_machine(material_type_input="plank", material_type_output="furniture")
+        machine_b.input_stocking_zone = self.machine.output_stocking_zone
         StartOperation(production_unit=machine_b, time_to_perform=1, worker=self.worker).perform(during=1)
-        
+        LoadOperation(Material(type="wood", quantity=1), production_unit=self.machine, worker=self.worker).perform()
+        ProduceOperation(production_unit=self.machine, worker=self.worker).perform()
+        ProduceOperation(production_unit=machine_b, worker=self.worker).perform()
+        self.assertEquals(len(machine_b.get_outputs()), 1)
+
     def test_working_hour(self):
         eight_hour_worker = Worker(working_hour = 8 * 60)
         self.assertRaises(Event, LoadOperation(Material(type="wood", quantity=1), production_unit=self.machine, worker=eight_hour_worker).perform, during=8*60 + 1)
