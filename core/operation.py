@@ -1,11 +1,9 @@
 import copy
 import logging
-from types import MethodType
 from core.constraint import HasWorkerConstraint, InputValidForSpecConstraint
 
-from core.production_unit import IllegalStateToPerformAction, ProductionUnit, NoWorkerToPerformAction,\
-    InvalidInputLoaded, CannotPerformOperation, ProductionUnitSTARTEDState, ProductionUnitIDLEState,\
-    CannotProduce, ProductionUnitPRODUCINGState
+from core.production_unit import IllegalStateToPerformAction, ProductionUnit,\
+    InvalidInputLoaded, CannotPerformOperation, ProductionUnitSTARTEDState, ProductionUnitPRODUCINGState
 
 logger = logging.getLogger()
 
@@ -147,7 +145,7 @@ class ProduceOperation(Operation):
         spec = self.production_unit.spec
         if not spec.validate_all(inputs):
             self.production_unit.set_state(ProductionUnitSTARTEDState)
-            raise CannotProduce("Inputs %s does not match constraints %s" % (inputs, spec))
+            raise InvalidInputLoaded("Inputs %s does not match constraints %s" % (inputs, spec))
         if self.progress == 1:
             self.production_unit.produce()
             self.progress = 0

@@ -9,8 +9,3 @@ class Factory(object):
 
     def add_production_unit(self, pu):
         self.production_units.append(pu)
-
-    def perform(self, during):
-        for i in range(during):
-            for pu in self.production_units:
-                pu.perform()

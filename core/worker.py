@@ -1,5 +1,5 @@
 from core.entity import Entity
-from core.event import DayOfWorkingIsOver
+from core.event import DayOfWorkIsOver
 
 class Worker(Entity):
 
@@ -16,7 +16,7 @@ class Worker(Entity):
     @hour_worked.setter
     def hour_worked(self, value):
         if value > self.working_hour:
-            raise DayOfWorkingIsOver(self)
+            raise DayOfWorkIsOver(self)
         self._hour_worked = value
 
     def add_unit_of_work(self):

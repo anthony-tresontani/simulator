@@ -2,6 +2,7 @@ import collections
 import logging
 
 from core.entity import Entity
+from core.event import StockIsFull
 
 logger = logging.getLogger()
 
@@ -11,19 +12,12 @@ class NoWorkerToPerformAction(Exception): pass
 class IllegalStateToPerformAction(Exception): pass
 
 
-class Event(Exception): pass
+class CannotProduce(Exception): pass
+
+class InvalidInputLoaded(CannotProduce): pass
 
 
-class CannotProduce(Event): pass
-
-
-class InvalidInputLoaded(Event): pass
-
-
-class CannotPerformOperation(Event): pass
-
-
-class StockIsFull(Event): pass
+class CannotPerformOperation(CannotProduce): pass
 
 
 class SignalDescriptor(object):
@@ -90,7 +84,11 @@ class ProductionUnit(Entity):
     def set_output(self, outputs):
         self.outputs = outputs
         if self.output_stocking_zone:
-            self.output_stocking_zone.add_to_stock(outputs)
+            try:
+                self.output_stocking_zone.add_to_stock(outputs)
+            except StockIsFull, e:
+                e.entity = self
+                raise e
 
     def add_output_stocking_zone(self, zone):
         if self.output_stocking_zone:
