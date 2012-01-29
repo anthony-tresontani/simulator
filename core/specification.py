@@ -28,6 +28,9 @@ class Specification(object):
             return False
         return any(constraint.validate(inputs) for constraint in self.constraints)
 
+    def get_inputs(self):
+        return [constraint.material for constraint in self.constraints if isinstance(constraint, MaterialInputConstraint)]
+
 class InputConstraint(object):
 
     def __str__(self):

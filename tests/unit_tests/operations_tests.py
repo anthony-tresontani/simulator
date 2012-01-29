@@ -15,6 +15,16 @@ class TestOperation(TestCase):
         self.worker = Worker()
         self.input = Material("wood", quantity=3)
 
+    def test_equals(self):
+        self.assertEquals(StartOperation(self.machine, self.worker), StartOperation(self.machine, self.worker))
+
+    def test_load_equals(self):
+        op1 = LoadOperation(Material("input"),self.machine, self.worker)
+        op2 = LoadOperation(Material("other"),self.machine, self.worker)
+        op3 = LoadOperation(Material("input"),self.machine, self.worker)
+        self.assertFalse(op1==op2)
+        self.assertEquals(op1, op3)
+
     def test_load_operation(self):
         load_op = LoadOperation(self.input, production_unit=self.machine, time_to_perform=3, worker=self.worker)
 

@@ -4,6 +4,16 @@ class Event(Exception):
 
 class DayOfWorkIsOver(Event): pass
 class StockIsFull(Event): pass
+class NoWorkerToPerformAction(Event): pass
+
+class IllegalStateToPerformAction(Exception): pass
+
+
+class CannotProduce(Event): pass
+class InvalidInputLoaded(CannotProduce): pass
+class CannotPerformOperation(CannotProduce): pass
+
+
 
 class Failure(object):
     def react(self, production_unit):

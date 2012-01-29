@@ -1,4 +1,4 @@
-from core.production_unit import NoWorkerToPerformAction, InvalidInputLoaded
+from core.event import NoWorkerToPerformAction, InvalidInputLoaded
 
 class OperationalConstraint(object):
     def __init__(self, operation):

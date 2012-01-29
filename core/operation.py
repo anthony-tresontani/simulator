@@ -1,9 +1,9 @@
 import copy
 import logging
 from core.constraint import HasWorkerConstraint, InputValidForSpecConstraint
+from core.event import IllegalStateToPerformAction, CannotPerformOperation, InvalidInputLoaded
 
-from core.production_unit import IllegalStateToPerformAction, ProductionUnit,\
-    InvalidInputLoaded, CannotPerformOperation, ProductionUnitSTARTEDState, ProductionUnitPRODUCINGState
+from core.production_unit import ProductionUnit, ProductionUnitSTARTEDState, ProductionUnitPRODUCINGState
 
 logger = logging.getLogger()
 
@@ -16,6 +16,12 @@ class Operation(object):
         self.elapsed_time = 0
         self.progress = 0.0
         self.worker = worker
+
+    def __eq__(self, other):
+        return type(self) == type(other) and\
+               self.production_unit == other.production_unit and\
+               self.time_to_perform == other.time_to_perform and\
+               self.worker == self.worker
 
     def add_constraint(self, constraint):
         self.constraints.append(constraint)
@@ -81,6 +87,9 @@ class Operation(object):
 class LoadOperation(Operation):
     valid_state = [ProductionUnit.IDLE, ProductionUnit.STARTED, ProductionUnit.PRODUCING]
     static_constraints = [HasWorkerConstraint, InputValidForSpecConstraint]
+
+    def __eq__(self, other):
+        return super(LoadOperation, self).__eq__(other) and self.inputs == other.inputs
 
     def __init__(self, inputs, *args, **kwargs):
         self.inputs = inputs

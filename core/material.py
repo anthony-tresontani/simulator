@@ -16,6 +16,9 @@ class Material(object):
 	    return Material(self.type, self.quantity + material.quantity)
         return self, material
 
+    def __eq__(self, other):
+        return self.type == other.type and self.quantity == other.quantity
+
     def consume(self, spec):
         for constraint in spec.constraints:
             if isinstance(constraint, MaterialInputConstraint) and constraint.material.type==self.type:

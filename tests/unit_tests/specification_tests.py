@@ -20,3 +20,7 @@ class SpecificationTest(TestCase):
 
     def test_str(self):
         self.assertEquals(self.spec.__str__(), "Validate input is type of flour\nValidate input is type of water")
+
+    def test_get_inputs(self):
+        self.assertEquals(self.spec.get_inputs()[0], Material("flour", 1))
+        self.assertEquals(self.spec.get_inputs()[1], Material("water", 2))

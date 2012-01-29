@@ -1,13 +1,13 @@
 import unittest
+from unittest.case import TestCase
 from core.operation import LoadOperation, StartOperation, StopOperation, ProduceOperation
 
-from core.production_unit import ProductionUnit, CannotPerformOperation, StockingZone
-from core.production_unit import IllegalStateToPerformAction, InvalidInputLoaded, NoWorkerToPerformAction
+from core.production_unit import ProductionUnit, StockingZone
 
 from core.material import Material
 from core.worker import Worker
 from core.specification import Specification, MaterialInputConstraint, SkillConstraint
-from core.event import Failure, Fix, Event
+from core.event import Failure, Fix, Event, NoWorkerToPerformAction, IllegalStateToPerformAction, InvalidInputLoaded, CannotPerformOperation
 from tests.utils import create_machine
 
 
@@ -20,11 +20,11 @@ class ProductionUnitTest(unittest.TestCase):
 
         self.inputs = Material("yarn")
         self.started_production_unit = ProductionUnit(spec)
-        StartOperation(production_unit=self.started_production_unit, worker=self.worker).perform()
+        self.started_production_unit.perform_next_operation(self.worker)
 
         self.loaded_production_unit = ProductionUnit(spec)
-        StartOperation(production_unit=self.loaded_production_unit, worker=self.worker).perform()
-        LoadOperation(self.inputs, production_unit=self.loaded_production_unit, worker=self.worker).perform()
+        self.loaded_production_unit.perform_next_operation(self.worker)
+        self.loaded_production_unit.perform_next_operation(self.worker)
 
         config = {'rate_by_minute': 0.2}
         spec_four = Specification()
@@ -34,8 +34,8 @@ class ProductionUnitTest(unittest.TestCase):
 
         self.four_a_pain = ProductionUnit(spec_four, config)
 
-        LoadOperation(Material("flour", 2), production_unit=self.four_a_pain, worker=self.worker).perform()
-        StartOperation(production_unit=self.four_a_pain, worker=self.worker).perform()
+        self.four_a_pain.perform_next_operation(self.worker)
+        self.four_a_pain.perform_next_operation(self.worker)
 
     def test_state_idle(self):
         self.assertEquals(self.unaffected_production_unit.get_state(), ProductionUnit.IDLE)
@@ -64,10 +64,9 @@ class ProductionUnitTest(unittest.TestCase):
 
     def test_slower_machine_configuration(self):
         slower_gp, spec, zone = create_machine(material_type_input="yarn", rate=0.5)
+        slower_gp.perform_next_operation(self.worker)
+        slower_gp.perform_next_operation(self.worker)
 
-        LoadOperation(self.inputs, slower_gp, worker=self.worker).perform()
-
-        StartOperation(slower_gp,worker=self.worker).perform()
         ProduceOperation(slower_gp, worker=self.worker).perform(during=2)
         self.assertEquals(len(slower_gp.get_outputs()), 1)
 
@@ -127,6 +126,14 @@ class ProductionUnitTest(unittest.TestCase):
             pass
 
         self.assertEquals(stock_zone.count(), 3)
+
+class TestProtocol(TestCase):
+
+    def test_production_unit_create_a_protocol(self):
+        self.machine, spec, zone = create_machine(material_type_input="yarn")
+        self.assertEquals(self.machine.protocol.next(), StartOperation(production_unit=self.machine))
+        self.assertEquals(self.machine.protocol.next(), LoadOperation(Material("yarn"), production_unit=self.machine))
+        self.assertEquals(self.machine.protocol.next(), ProduceOperation(production_unit=self.machine))
 
 class TestStock(unittest.TestCase):
 

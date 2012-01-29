@@ -3,21 +3,9 @@ import logging
 
 from core.entity import Entity
 from core.event import StockIsFull
+from core.material import Material
 
 logger = logging.getLogger()
-
-class NoWorkerToPerformAction(Exception): pass
-
-
-class IllegalStateToPerformAction(Exception): pass
-
-
-class CannotProduce(Exception): pass
-
-class InvalidInputLoaded(CannotProduce): pass
-
-
-class CannotPerformOperation(CannotProduce): pass
 
 
 class SignalDescriptor(object):
@@ -37,6 +25,28 @@ class SignalDescriptor(object):
     def __delete__(self, instance):
         del(instance._value)
 
+class Protocol(object):
+    def __init__(self, machine):
+        self._protocol_index = 0
+        self.machine = machine
+        self._protocol =  self.create_protocol()
+
+    def create_protocol(self):
+        from core.operation import StartOperation, LoadOperation, ProduceOperation
+        protocol_list = [(StartOperation, {})]
+        inputs = self.machine.spec.get_inputs() if self.machine.spec else []
+        for input in inputs:
+            protocol_list.append((LoadOperation, {"inputs":input}))
+        protocol_list.append((ProduceOperation, {}))
+        return protocol_list
+
+    def next(self):
+        protocol_tuple = self._protocol[self._protocol_index % len(self._protocol)]
+        protocol = protocol_tuple[0](production_unit=self.machine, **protocol_tuple[1])
+        self._protocol_index += 1
+        return protocol
+
+
 class ProductionUnit(Entity):
     IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
     state = SignalDescriptor("state")
@@ -50,10 +60,16 @@ class ProductionUnit(Entity):
         self.spec = spec
         self.initialize()
         self.set_state(ProductionUnitIDLEState)
+        self.protocol = Protocol(self)
 
     def initialize(self):
         self.rate = self.config.get("rate_by_minute", 1)
         self.input_types = self.config.get("input_types", None)
+
+    def perform_next_operation(self, worker=None, during=1):
+        operation = self.protocol.next()
+        operation.worker = worker
+        operation.perform(during=during)
 
     @property
     def inputs(self):
