@@ -107,14 +107,15 @@ class TestScenario(TestCase):
         self.assertEquals(len(machine_b.get_outputs()), 1)
 
     def test_working_hour(self):
-        factory = Factory()
-        ev = EventManager(factory)
         eight_hour_worker = Worker(working_hour = 8 * 60)
         self.assertRaises(Event, LoadOperation(Material(type="wood", quantity=1), production_unit=self.machine, worker=eight_hour_worker).perform, during=8*60 + 1)
 
+    def test_24_hours_shifts(self):
+        factory = Factory()
+        ev = EventManager(factory)
         ev.add_worker(Worker(working_hour = 8 * 60))
         ev.add_worker(Worker(working_hour = 8 * 60))
         ev.add_worker(Worker(working_hour = 8 * 60))
-
+        raise SkipTest("Not implemented")
         factory.add_production_unit(self.machine)
         factory.run(24 * 60)

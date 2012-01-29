@@ -9,3 +9,6 @@ class Factory(object):
 
     def add_production_unit(self, pu):
         self.production_units.append(pu)
+
+    def run(self):
+        pass
