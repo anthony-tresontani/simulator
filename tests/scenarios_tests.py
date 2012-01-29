@@ -111,11 +111,15 @@ class TestScenario(TestCase):
         self.assertRaises(Event, LoadOperation(Material(type="wood", quantity=1), production_unit=self.machine, worker=eight_hour_worker).perform, during=8*60 + 1)
 
     def test_24_hours_shifts(self):
+        # 1 hour to load, 1 hour to produce
+        # produce 2 every 2 hours ie 12 - 1 (1 to start the machine)
+        machine, spec, stock = create_machine(stocking_zone_size=None)
         factory = Factory()
         ev = EventManager(factory)
-        ev.add_worker(Worker(working_hour = 8 * 60))
-        ev.add_worker(Worker(working_hour = 8 * 60))
-        ev.add_worker(Worker(working_hour = 8 * 60))
-        raise SkipTest("Not implemented")
-        factory.add_production_unit(self.machine)
-        factory.run(24 * 60)
+        ev.add_worker(Worker(working_hour = 8 * 1))
+        ev.add_worker(Worker(working_hour = 8 * 1))
+        ev.add_worker(Worker(working_hour = 8 * 1))
+        factory.add_production_unit(machine)
+        ev.run(24 * 1)
+
+        self.assertEquals(stock.count(), 11)

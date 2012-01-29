@@ -1,4 +1,5 @@
 from unittest.case import TestCase
+from core.event import NoWorkerToPerformAction
 from core.material import Material
 from core.operation import LoadOperation, ProduceOperation, StartOperation, AllInOneLoadOperation
 from core.production_unit import ProductionUnit
@@ -53,3 +54,6 @@ class TestOperation(TestCase):
 
         produce_op.perform(during=3)
         self.assertEquals(len(self.machine.get_outputs()), 1)
+
+    def test_has_worker_constraint(self):
+        self.assertRaises(NoWorkerToPerformAction, LoadOperation(Material("k"), self.machine).perform)

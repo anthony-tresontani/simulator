@@ -52,22 +52,23 @@ class Operation(object):
     def perform(self, during=1):
         self.check_all()
         for i in range(during):
-            logger.debug("###TIME### - %d" % i)
             self.do_step()
 
     def do_step(self):
+
         if self.is_operation_complete():
             self.progress = 0
 
         if self.operation_ready_to_be_performed():
+
+            if self.worker:
+                self.worker.add_unit_of_work()
+
             self._do_step()
             self.progress += self.get_progress_step()
 
         if self.is_operation_complete():
             self.on_operation_complete()
-
-        if self.worker:
-            self.worker.add_unit_of_work()
 
     def on_operation_complete(self):
         pass

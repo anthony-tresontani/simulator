@@ -3,7 +3,6 @@ import logging
 
 from core.entity import Entity
 from core.event import StockIsFull
-from core.material import Material
 
 logger = logging.getLogger()
 
@@ -17,10 +16,7 @@ class SignalDescriptor(object):
         return instance._value
 
     def __set__(self, instance, value):
-        if hasattr(instance, self.name):
-            print "Was %s" % getattr(instance, self.name)
         instance._value = value
-        print "Is %s" % instance._value
 
     def __delete__(self, instance):
         del(instance._value)
@@ -41,7 +37,11 @@ class Protocol(object):
         return protocol_list
 
     def next(self):
-        protocol_tuple = self._protocol[self._protocol_index % len(self._protocol)]
+        if self._protocol_index < len(self._protocol):
+            index = self._protocol_index
+        else:
+            index = (self._protocol_index - len(self._protocol)) % (len(self._protocol) -1) + 1
+        protocol_tuple = self._protocol[index]
         protocol = protocol_tuple[0](production_unit=self.machine, **protocol_tuple[1])
         self._protocol_index += 1
         return protocol

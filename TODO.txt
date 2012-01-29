@@ -1,6 +1,5 @@
 - create a config format
 - generate report
 - multiple worker
-- add a protocol to PU
 - On event manager (for each exception type)
 - create an operation type
