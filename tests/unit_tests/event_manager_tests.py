@@ -13,11 +13,11 @@ class TestEventManager(TestCase):
 
     def test_day_is_over(self):
         worker = Worker()
-        Factory.run = self.raise_event(DayOfWorkIsOver, worker)
+        Factory.do_step = self.raise_event(DayOfWorkIsOver, worker)
         event_manager = EventManager(Factory())
 
         event_manager.add_worker(worker)
-        event_manager.run()
+        event_manager.run(1)
         self.assertEquals(event_manager.available_workers, [])
 
     def test_get_available_worker(self):

@@ -59,7 +59,6 @@ class EventManager(object):
 
     def on_day_of_work_is_over(self, worker):
         logger.info("On day is over")
-        print "On day is over"
         self.available_workers.remove(worker)
 
     
