@@ -1,4 +1,5 @@
 import logging
+from core import Runnable
 
 logger = logging.getLogger()
 
@@ -31,7 +32,7 @@ class Fix(object):
         from core.production_unit import ProductionUnitSTARTEDState
         production_unit.set_state(ProductionUnitSTARTEDState)
 
-class EventManager(object):
+class EventManager(Runnable):
 
     def __init__(self, factory):
         self.factory = factory
@@ -50,9 +51,7 @@ class EventManager(object):
 
     def run(self, during):
         self.initialize()
-        for i in range(during):
-            logger.debug("###TIME### - %d" % i)
-            self.do_step()
+        super(EventManager, self).run(during)
 
     def add_worker(self, worker):
         self.available_workers.append(worker)

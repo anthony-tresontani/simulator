@@ -69,7 +69,7 @@ class ProductionUnit(Entity):
     def perform_next_operation(self, worker=None, during=1):
         operation = self.protocol.next()
         operation.worker = worker
-        operation.perform(during=during)
+        operation.run(during=during)
 
     @property
     def inputs(self):

@@ -29,31 +29,31 @@ class TestOperation(TestCase):
     def test_load_operation(self):
         load_op = LoadOperation(self.input, production_unit=self.machine, time_to_perform=3, worker=self.worker)
 
-        load_op.perform(during=1)
+        load_op.run(during=1)
         self.assertEquals(self.machine.inputs.count(), 1)
 
-        load_op.perform(during=2)
+        load_op.run(during=2)
         self.assertEquals(self.machine.inputs.count(), 3)
 
     def test_load_all_in_one_operation(self):
         load_op = AllInOneLoadOperation(self.input, production_unit=self.machine, time_to_perform=3, worker=self.worker)
 
-        load_op.perform(during=1)
+        load_op.run(during=1)
         self.assertEquals(self.machine.inputs.count(), 0)
 
-        load_op.perform(during=2)
+        load_op.run(during=2)
         self.assertEquals(self.machine.inputs.count(), 3)
 
     def test_produce_operation(self):
-        StartOperation(production_unit=self.machine,worker=self.worker).perform(during=1)
-        LoadOperation(self.input, production_unit=self.machine, time_to_perform=1, worker=self.worker).perform(during=1)
+        StartOperation(production_unit=self.machine,worker=self.worker).run(during=1)
+        LoadOperation(self.input, production_unit=self.machine, time_to_perform=1, worker=self.worker).run(during=1)
         produce_op = ProduceOperation(production_unit=self.machine)
 
-        produce_op.perform(during=1)
+        produce_op.run(during=1)
         self.assertEquals(len(self.machine.get_outputs()), 0)
 
-        produce_op.perform(during=3)
+        produce_op.run(during=3)
         self.assertEquals(len(self.machine.get_outputs()), 1)
 
     def test_has_worker_constraint(self):
-        self.assertRaises(NoWorkerToPerformAction, LoadOperation(Material("k"), self.machine).perform)
+        self.assertRaises(NoWorkerToPerformAction, LoadOperation(Material("k"), self.machine).run)

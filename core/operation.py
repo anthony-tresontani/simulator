@@ -1,5 +1,6 @@
 import copy
 import logging
+from core import Runnable
 from core.constraint import HasWorkerConstraint, InputValidForSpecConstraint
 from core.event import IllegalStateToPerformAction, CannotPerformOperation, InvalidInputLoaded
 
@@ -8,7 +9,7 @@ from core.production_unit import ProductionUnit, ProductionUnitSTARTEDState, Pro
 logger = logging.getLogger()
 
 
-class Operation(object):
+class Operation(Runnable):
     def __init__(self, production_unit=None, time_to_perform=1, worker=None):
         self.production_unit = production_unit
         self.constraints = []
@@ -49,10 +50,9 @@ class Operation(object):
         for constraint in self.static_constraints:
             constraint(self).validate(self.worker)
 
-    def perform(self, during=1):
+    def run(self, during=1):
         self.check_all()
-        for i in range(during):
-            self.do_step()
+        super(Operation, self).run(during)
 
     def do_step(self):
 

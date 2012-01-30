@@ -1,8 +1,9 @@
 import logging
+from core import Runnable
 
 logger = logging.getLogger()
 
-class Factory(object):
+class Factory(Runnable):
     def __init__(self):
         self.workers = []
         self.production_units = []
@@ -23,12 +24,8 @@ class Factory(object):
     def do_step(self):
         for operation in self.current_operations:
             operation.worker = self.available_worker.pop()
-            operation.perform()
+            operation.run()
             if operation.is_operation_complete():
                 self.current_operations.remove(operation)
                 self.current_operations.append(operation.production_unit.protocol.next())
                 self.available_worker.append(operation.worker)
-
-    def run(self, during):
-        for i in range(during):
-            self.do_step()
