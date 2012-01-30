@@ -111,7 +111,7 @@ class TestScenario(TestCase):
     def test_24_hours_shifts(self):
         # 1 hour to load, 1 hour to produce
         # produce 2 every 2 hours
-        # ie 24 - 1 (1 to start the machine) - 2 (day is over) / 2 = 10
+        # ie 24 - 1 (1 to start the machine) / 2 = 10
         machine, spec, stock = create_machine(stocking_zone_size=None)
         factory = Factory()
         factory.add_worker(Worker(working_hour = 8 * 60))
@@ -120,4 +120,4 @@ class TestScenario(TestCase):
         factory.add_production_unit(machine)
         factory.run(24 * 60)
 
-        self.assertEquals(stock.count(), 720 - 2)
+        self.assertEquals(stock.count(), 720 - 1)

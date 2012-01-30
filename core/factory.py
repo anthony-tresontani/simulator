@@ -38,11 +38,13 @@ class Factory(Runnable):
         super(Factory, self).run(during)
 
     def do_step(self):
-        try:
-            for operation in self.current_operations:
+        for operation in self.current_operations:
+            try:
                 self.execute_operation(operation)
-        except DayOfWorkIsOver, e:
-            self.on_day_of_work_is_over(e.entity)
+            except DayOfWorkIsOver, e:
+                self.on_day_of_work_is_over(e.entity)
+                self.execute_operation(operation)
+
 
     def on_day_of_work_is_over(self, worker):
         logger.info("-"*10)
