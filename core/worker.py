@@ -1,4 +1,4 @@
-from core.entity import Entity
+from core import Entity
 from core.event import DayOfWorkIsOver
 
 class Worker(Entity):

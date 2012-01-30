@@ -1,12 +1,10 @@
-from pdb import set_trace
-from unittest.case import TestCase, SkipTest
-from core.event import Event, EventManager
+from unittest.case import TestCase
+from core.event import Event
 from core.factory import Factory
 
 from core.material import Material
 from core.operation import StartOperation, LoadOperation, ProduceOperation, Process, UnloadOperation, ParallelProcess
-from core.production_unit import ProductionUnit, StockingZone
-from core.specification import Specification, MaterialInputConstraint
+from core.production_unit import  StockingZone
 from core.worker import Worker
 from tests.utils import create_machine
 
@@ -116,11 +114,10 @@ class TestScenario(TestCase):
         # ie 24 - 1 (1 to start the machine) - 2 (day is over) / 2 = 10
         machine, spec, stock = create_machine(stocking_zone_size=None)
         factory = Factory()
-        ev = EventManager(factory)
-        ev.add_worker(Worker(working_hour = 8 * 60))
-        ev.add_worker(Worker(working_hour = 8 * 60))
-        ev.add_worker(Worker(working_hour = 8 * 60))
+        factory.add_worker(Worker(working_hour = 8 * 60))
+        factory.add_worker(Worker(working_hour = 8 * 60))
+        factory.add_worker(Worker(working_hour = 8 * 60))
         factory.add_production_unit(machine)
-        ev.run(24 * 60)
+        factory.run(24 * 60)
 
         self.assertEquals(stock.count(), 720 - 2)

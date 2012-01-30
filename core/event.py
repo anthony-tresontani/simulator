@@ -31,34 +31,3 @@ class Fix(object):
     def react(self, production_unit):
         from core.production_unit import ProductionUnitSTARTEDState
         production_unit.set_state(ProductionUnitSTARTEDState)
-
-class EventManager(Runnable):
-
-    def __init__(self, factory):
-        self.factory = factory
-        self.available_workers = []
-
-    def initialize(self):
-        for worker in self.available_workers:
-            self.factory.add_worker(worker)
-        self.factory.init_operations()
-
-    def do_step(self):
-        try:
-            self.factory.do_step()
-        except DayOfWorkIsOver, e:
-            self.on_day_of_work_is_over(e.entity)
-
-    def run(self, during):
-        self.initialize()
-        super(EventManager, self).run(during)
-
-    def add_worker(self, worker):
-        self.available_workers.append(worker)
-
-    def on_day_of_work_is_over(self, worker):
-        logger.info("On day is over")
-        self.available_workers.remove(worker)
-
-    
-

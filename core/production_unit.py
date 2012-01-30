@@ -1,7 +1,7 @@
 import collections
 import logging
+from core import Entity
 
-from core.entity import Entity
 from core.event import StockIsFull
 
 logger = logging.getLogger()
