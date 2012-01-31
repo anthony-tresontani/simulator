@@ -1,5 +1,11 @@
-- create a config format
+- create a config format in YAML to generate a Factory:
+  """Factory
+         PU
+           Protocol
+         PU
+  """
 - generate report
 - multiple worker
-- On event manager (for each exception type)
 - create an operation type
+- Create a time object listener
+ 
