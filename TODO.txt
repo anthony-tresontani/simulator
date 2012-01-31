@@ -7,5 +7,7 @@
 - generate report
 - multiple worker
 - create an operation type
-- Create a time object listener
+- Create a time object listener: 
+    Timeable implements do_a_cycle(Time object)
+    Time implement register
  
