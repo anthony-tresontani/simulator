@@ -1,11 +1,12 @@
 import logging
-from core import Runnable
+from core import Runnable, Entity
 from core.event import DayOfWorkIsOver
 
 logger = logging.getLogger()
 
-class Factory(Runnable):
+class Factory(Runnable, Entity):
     def __init__(self):
+        Entity.__init__(self)
         self.workers = []
         self.available_workers = []
         self.production_units = []

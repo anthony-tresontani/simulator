@@ -1,3 +1,4 @@
+from hamcrest.core.base_matcher import BaseMatcher
 from core.material import Material
 from core.production_unit import ProductionUnit, StockingZone
 from core.specification import Specification, MaterialInputConstraint
