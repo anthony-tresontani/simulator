@@ -15,6 +15,10 @@ class Entity(object):
 
 class Runnable(object):
 
-    def run(self, i):
+    def __init__(self):
+        self.time = 0
+
+    def run(self, i=1):
         for i in range(i):
             self.do_step()
+            self.time += 1

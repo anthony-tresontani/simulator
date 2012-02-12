@@ -7,6 +7,7 @@ logger = logging.getLogger()
 class Factory(Runnable, Entity):
     def __init__(self, name=""):
         Entity.__init__(self)
+        Runnable.__init__(self)
         self.workers = []
         self.available_workers = []
         self.production_units = []
@@ -24,7 +25,6 @@ class Factory(Runnable, Entity):
             self.current_operations.append(machine.protocol.next())
 
         self.available_workers = self.workers[:]
-        print "available", self.available_workers
 
     def execute_operation(self, operation):
         if self.available_workers:
@@ -35,7 +35,7 @@ class Factory(Runnable, Entity):
             self.current_operations.append(operation.production_unit.protocol.next())
             self.available_workers.append(operation.worker)
 
-    def run(self, during):
+    def run(self, during=1):
         self.init_operations()
         super(Factory, self).run(during)
 

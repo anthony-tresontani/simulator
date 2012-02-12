@@ -19,11 +19,14 @@ class FactoryConfiguration(FactoryHandler):
 
 class RemoteCommand(FactoryHandler):
     def post(self, factory_ID):
-        factory = self.get_factory(factory_ID)
-        action = self.get_argument("action")
+        self.factory = self.get_factory(factory_ID)
+        action = self.get_argument("command")
         if action == "run":
+            self.run()
 
-
+    def run(self):
+        time = int(self.get_argument("time"))
+        self.factory.run(during=time)
 
 
 application = tornado.web.Application([
@@ -32,7 +35,7 @@ application = tornado.web.Application([
 ])
 
 def start_server(application):
-    application.listen(8888)
+    application.listen(8889)
     tornado.ioloop.IOLoop.instance().start()
 
 if __name__ == "__main__":

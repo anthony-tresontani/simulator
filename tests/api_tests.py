@@ -9,6 +9,7 @@ from hamcrest import *
 from core.factory import Factory
 from core.worker import Worker
 from tests.utils import create_machine
+from urllib import urlencode
 
 def in_python(expression):
     return simplejson.loads(expression)
@@ -45,10 +46,43 @@ class TestApi(TestCase):
         assert_that(result_dict, has_entries({"number of workers":1}))
 
     def test_POST_report(self):
-        post_data = "action=run"
+        post_data = {"command":"run", "time":2}
         self.http_client.fetch(tornado.httpclient.HTTPRequest('http://localhost:8888/command/%d' % self.factory.reference,
-                                                              method="POST", body=post_data),
+                                                              method="POST", body=urlencode(post_data)),
             self.handle_request)
         tornado.ioloop.IOLoop.instance().start()
         assert_that(self.response.error, is_(none()))
-        assert_that()
+        assert_that(self.factory.time, is_(2))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

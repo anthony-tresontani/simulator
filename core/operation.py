@@ -11,12 +11,14 @@ logger = logging.getLogger()
 
 class Operation(Runnable):
     def __init__(self, production_unit=None, time_to_perform=1, worker=None):
+        super(Operation, self).__init__()
         self.production_unit = production_unit
         self.constraints = []
         self.time_to_perform = time_to_perform
         self.elapsed_time = 0
         self.progress = 0.0
         self.worker = worker
+        self.time = 0
 
     def __eq__(self, other):
         return type(self) == type(other) and\
