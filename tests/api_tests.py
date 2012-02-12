@@ -15,6 +15,13 @@ def in_python(expression):
 
 config = """
 name: textil
+materials:
+    - type: wood
+      price: 3
+
+    - type: wire
+      price: 5
+      
 production_units:
     - name: wiremachine
       inputs:
@@ -60,6 +67,12 @@ class TestApi(TestCase):
         assert_that(result_dict, has_entries({"Current time": 0}))
 
     def test_get_production_unit_info(self):
+        post_data = {"command":"run", "time":3}
+        self.http_client.fetch(tornado.httpclient.HTTPRequest('http://localhost:8888/command/%d' % self.factory.reference,
+                                                              method="POST", body=urlencode(post_data)),
+            self.handle_request)
+        tornado.ioloop.IOLoop.instance().start()
+
         self.http_client.fetch('http://localhost:8888/reports/%d/productionunit/wiremachine' % self.factory.reference,
             self.handle_request)
         tornado.ioloop.IOLoop.instance().start()
@@ -68,7 +81,9 @@ class TestApi(TestCase):
 
         result_dict = in_python(self.response.body)
         assert_that(result_dict, has_entries({"produce": ["wire"]}))
-        assert_that(result_dict, has_entries({"units_produced": 0}))
+        assert_that(result_dict, has_entries({"units_produced": 1}))
+        assert_that(result_dict, has_entries({"value_produced": 5}))
+
 
     def test_POST_report(self):
         post_data = {"command":"run", "time":2}

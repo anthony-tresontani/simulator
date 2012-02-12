@@ -23,4 +23,5 @@ class Report(object):
             raise EntityNotFound("No production unit found with name %s" % name)
         values["produce"] = [material.type for material in production_unit.spec.output_materials]
         values["units_produced"] = production_unit.unit_produced
+        values["value_produced"] = sum([material.price * production_unit.unit_produced for material in production_unit.spec.output_materials])
         return values

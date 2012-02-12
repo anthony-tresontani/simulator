@@ -1,9 +1,10 @@
 from core.specification import MaterialInputConstraint
 
 class Material(object):
-    def __init__(self, type, quantity=1):
+    def __init__(self, type, quantity=1, price=1):
         self.type = type
         self.quantity = quantity
+        self.price = price
 
     def __str__(self):
         return "%d of %s" %(self.quantity, self.type)
