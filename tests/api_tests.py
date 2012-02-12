@@ -42,8 +42,9 @@ class TestApi(TestCase):
         assert_that(self.response.error, is_(none()))
 
         result_dict = in_python(self.response.body)
-        assert_that(result_dict, has_entries({"number of production unit":1}))
-        assert_that(result_dict, has_entries({"number of workers":1}))
+        assert_that(result_dict, has_entries({"number of production unit": 1}))
+        assert_that(result_dict, has_entries({"number of workers": 1}))
+        assert_that(result_dict, has_entries({"Current time": 0}))
 
     def test_POST_report(self):
         post_data = {"command":"run", "time":2}

@@ -5,6 +5,7 @@ class Report(object):
 
     def get_data(self):
         values = {}
+        values["Current time"] = self.factory.time
         values["number of production unit"] = len(self.factory.production_units)
         values["number of workers"] = len(self.factory.workers)
         return values
