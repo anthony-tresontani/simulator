@@ -6,13 +6,28 @@ import tornado.httpclient
 import tornado.ioloop
 import tornado.web
 from hamcrest import *
-from core.factory import Factory
-from core.worker import Worker
+from configuration import get_factory
 from tests.utils import create_machine
 from urllib import urlencode
 
 def in_python(expression):
     return simplejson.loads(expression)
+
+config = """
+name: textil
+production_units:
+    - name: wiremachine
+      inputs:
+          - input_type: wood
+            input_quantity: 1
+      outputs:
+          - input_type: wire
+            input_quantity: 1
+workers:
+    - type: generic
+      number: 1
+      working_hour: 8
+"""
 
 class TestApi(TestCase):
     @classmethod
@@ -22,9 +37,7 @@ class TestApi(TestCase):
 
     def setUp(self):
         machine, spec, stock = create_machine(stocking_zone_size=None)
-        self.factory = Factory()
-        self.factory.add_worker(Worker(working_hour = 8 * 60))
-        self.factory.add_production_unit(machine)
+        self.factory = get_factory(config)
         self.http_client = tornado.httpclient.AsyncHTTPClient()
 
     def tearDown(self):
@@ -45,6 +58,17 @@ class TestApi(TestCase):
         assert_that(result_dict, has_entries({"number of production unit": 1}))
         assert_that(result_dict, has_entries({"number of workers": 1}))
         assert_that(result_dict, has_entries({"Current time": 0}))
+
+    def test_get_production_unit_info(self):
+        self.http_client.fetch('http://localhost:8888/reports/%d/productionunit/wiremachine' % self.factory.reference,
+            self.handle_request)
+        tornado.ioloop.IOLoop.instance().start()
+
+        assert_that(self.response.error, is_(none()))
+
+        result_dict = in_python(self.response.body)
+        assert_that(result_dict, has_entries({"produce": ["wire"]}))
+        assert_that(result_dict, has_entries({"units_produced": 0}))
 
     def test_POST_report(self):
         post_data = {"command":"run", "time":2}

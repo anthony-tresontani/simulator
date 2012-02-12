@@ -51,7 +51,7 @@ class ProductionUnit(Entity):
     IDLE, STARTED, PRODUCING, FAILURE = 0, 1, 2, 3
     state = SignalDescriptor("state")
 
-    def __init__(self, spec, config={}, input_stocking_zone=None, output_stocking_zone=None):
+    def __init__(self, spec, config={}, input_stocking_zone=None, output_stocking_zone=None, name=""):
         super(ProductionUnit, self).__init__()
         self.inputs_stocking_zone = input_stocking_zone or StockingZone()
         self.outputs = []
@@ -61,6 +61,8 @@ class ProductionUnit(Entity):
         self.initialize()
         self.set_state(ProductionUnitIDLEState)
         self.protocol = Protocol(self)
+        self.name = name
+        self.unit_produced = 0
 
     def initialize(self):
         self.rate = self.config.get("rate_by_minute", 1)
@@ -90,6 +92,7 @@ class ProductionUnit(Entity):
             if not input.quantity:
                 self.inputs.remove(input)
         self.set_output(self.spec.output_materials)
+        self.unit_produced += 1
 
     def get_outputs(self):
         return self.outputs

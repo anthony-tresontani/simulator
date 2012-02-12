@@ -5,8 +5,8 @@ from core.event import DayOfWorkIsOver
 logger = logging.getLogger()
 
 class Factory(Runnable, Entity):
-    def __init__(self, name=""):
-        Entity.__init__(self)
+    def __init__(self, name="", ID=None):
+        Entity.__init__(self, ID)
         Runnable.__init__(self)
         self.workers = []
         self.available_workers = []

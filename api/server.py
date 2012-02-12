@@ -13,8 +13,14 @@ class FactoryHandler(tornado.web.RequestHandler):
 class FactoryConfiguration(FactoryHandler):
     def get(self, factory_ID):
         # respond to a GET
-        report = Report(self.get_factory(factory_ID))
-        self.write(report.get_data())
+        report = Report()
+        self.write(report.get_factory_data(int(factory_ID)))
+
+class ProductionUnit(FactoryHandler):
+    def get(self, factory_ID, pu_name):
+        # respond to a GET
+        report = Report()
+        self.write(report.get_production_unit_data(int(factory_ID), pu_name))
 
 
 class RemoteCommand(FactoryHandler):
@@ -31,6 +37,7 @@ class RemoteCommand(FactoryHandler):
 
 application = tornado.web.Application([
     (r"/reports/([0-9]+)", FactoryConfiguration),
+    (r"/reports/([0-9]+)/productionunit/([a-z0-9]+)", ProductionUnit),
     (r"/command/([0-9]+)", RemoteCommand),
 ])
 

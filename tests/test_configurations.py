@@ -3,7 +3,8 @@ from hamcrest import *
 from configuration import get_factory
 
 
-conf = """factory: textil
+conf = """ID: 1
+name: textil
 production_units:
     - name: typeA
       rate: 5
