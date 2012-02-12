@@ -1,10 +1,4 @@
-- create a config format in YAML to generate a Factory:
-  """Factory
-         PU
-           Protocol
-         PU
-  """ + Rx validation
-- generate report
-- multiple worker
-- create an operation type
- 
+- add yaml validation
+- multiple worker on the same machine
+- rewrite protocol and allow simple protocol manipulation
+- write a test for a production unit where 10 minutes should be waited before producing
